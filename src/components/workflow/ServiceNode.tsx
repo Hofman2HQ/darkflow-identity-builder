@@ -1,33 +1,34 @@
 
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 
 export type LogicType = 'Success' | 'Failed' | 'Conditional' | 'Indecisive' | 'Custom';
 export type ServiceType = 'WebApp' | 'StartNode' | 'EndNode' | 'IDV' | 'Media' | 'PII' | 'Consent' | 'ConditionalLogic' | 'TextNode' | 'DescriptionBox';
 
 const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
   const { type, label, isValid, logicType, description } = data;
+  const [fontSize, setFontSize] = useState<number>(14); // Default font size
   
   const getBorderColor = () => {
-    if (selected) return '#9b87f5'; // purple for selected
-    if (isValid === false) return '#ef4444'; // red for invalid
-    if (type === 'EndNode') return '#f87171'; // light red for end node
-    if (type === 'StartNode') return '#4ade80'; // green for start node
-    return '#cbd5e1'; // default slate gray
+    if (selected) return 'rgba(155, 135, 245, 0.9)'; // purple for selected
+    if (isValid === false) return 'rgba(239, 68, 68, 0.9)'; // red for invalid
+    if (type === 'EndNode') return 'rgba(248, 113, 113, 0.9)'; // light red for end node
+    if (type === 'StartNode') return 'rgba(74, 222, 128, 0.9)'; // green for start node
+    return 'rgba(203, 213, 225, 0.6)'; // default slate gray with transparency
   };
   
-  const getBgColor = () => {
+  const getBgGradient = () => {
     if (type === 'DescriptionBox') return 'transparent'; // Transparent for description box
-    if (isValid === false) return '#fee2e2'; // light red for invalid
-    if (type === 'EndNode') return '#fef2f2'; // very light red for end
-    if (type === 'StartNode') return '#f0fdf4'; // very light green for start
-    if (type === 'WebApp') return '#eff6ff'; // very light blue
-    if (type === 'IDV') return '#f0fdf4'; // very light green
-    if (type === 'Media') return '#faf5ff'; // very light purple
-    if (type === 'PII') return '#fdf2f8'; // very light pink
-    if (type === 'ConditionalLogic') return '#fffbeb'; // very light amber 
-    return '#f8fafc'; // default very light slate
+    if (isValid === false) return 'linear-gradient(135deg, rgba(254, 226, 226, 0.6), rgba(254, 202, 202, 0.4))'; // light red for invalid
+    if (type === 'EndNode') return 'linear-gradient(135deg, rgba(254, 242, 242, 0.7), rgba(249, 168, 168, 0.4))'; // very light red for end
+    if (type === 'StartNode') return 'linear-gradient(135deg, rgba(240, 253, 244, 0.7), rgba(134, 239, 172, 0.4))'; // very light green for start
+    if (type === 'WebApp') return 'linear-gradient(135deg, rgba(239, 246, 255, 0.7), rgba(147, 197, 253, 0.4))'; // very light blue
+    if (type === 'IDV') return 'linear-gradient(135deg, rgba(240, 253, 244, 0.7), rgba(134, 239, 172, 0.4))'; // very light green
+    if (type === 'Media') return 'linear-gradient(135deg, rgba(250, 245, 255, 0.7), rgba(216, 180, 254, 0.4))'; // very light purple
+    if (type === 'PII') return 'linear-gradient(135deg, rgba(253, 242, 248, 0.7), rgba(249, 168, 212, 0.4))'; // very light pink
+    if (type === 'ConditionalLogic') return 'linear-gradient(135deg, rgba(255, 251, 235, 0.7), rgba(252, 211, 77, 0.4))'; // very light amber 
+    return 'linear-gradient(135deg, rgba(248, 250, 252, 0.7), rgba(226, 232, 240, 0.4))'; // default very light slate
   };
   
   const getTextColor = () => {
@@ -60,28 +61,68 @@ const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
     return '📦';
   };
   
+  const increaseTextSize = () => {
+    setFontSize(prev => Math.min(prev + 2, 24)); // Max size 24px
+  };
+  
+  const decreaseTextSize = () => {
+    setFontSize(prev => Math.max(prev - 2, 10)); // Min size 10px
+  };
+  
   // Special rendering for the description box
   if (type === 'DescriptionBox') {
     return (
       <div style={{ 
         background: 'transparent',
-        border: 'none',
-        boxShadow: 'none',
-        padding: '5px'
+        border: selected ? `1px dashed ${getBorderColor()}` : 'none',
+        boxShadow: selected ? '0 0 15px rgba(155, 135, 245, 0.3)' : 'none',
+        padding: '5px',
+        position: 'relative',
+        minWidth: '150px',
+        maxWidth: '300px',
       }}>
         <div style={{ 
-          color: '#4b5563', 
-          fontSize: '14px',
-          fontFamily: 'sans-serif',
+          color: selected ? '#f8fafc' : '#e2e8f0', 
+          fontSize: `${fontSize}px`,
+          fontFamily: 'system-ui, -apple-system, sans-serif',
           lineHeight: '1.4',
           whiteSpace: 'pre-wrap',
-          maxWidth: '300px',
           cursor: 'default',
-          padding: '0',
-          textAlign: 'left'
+          padding: '4px',
+          textAlign: 'left',
+          textShadow: '0 1px 2px rgba(0,0,0,0.3)'
         }}>
           {description || 'Description text...'}
         </div>
+        
+        {selected && (
+          <div style={{
+            position: 'absolute',
+            right: '0px',
+            top: '0px',
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'rgba(30, 41, 59, 0.7)',
+            borderRadius: '4px',
+            padding: '2px',
+          }}>
+            <button 
+              onClick={increaseTextSize} 
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px' }}
+              title="Increase font size"
+            >
+              <ChevronUp size={14} color="#e2e8f0" />
+            </button>
+            <button 
+              onClick={decreaseTextSize} 
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px' }}
+              title="Decrease font size"
+            >
+              <ChevronDown size={14} color="#e2e8f0" />
+            </button>
+          </div>
+        )}
+        
         <Handle
           type="target"
           position={Position.Left}
@@ -105,18 +146,49 @@ const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
         background: 'transparent',
         border: selected ? `1px dashed ${getBorderColor()}` : 'none',
         borderRadius: '4px',
-        padding: '5px'
+        padding: '5px',
+        boxShadow: selected ? '0 0 15px rgba(155, 135, 245, 0.3)' : 'none',
       }}>
         <div style={{ 
-          color: '#4b5563', 
-          fontSize: '14px',
-          fontFamily: 'sans-serif',
+          color: '#e2e8f0', 
+          fontSize: `${fontSize}px`,
+          fontFamily: 'system-ui, -apple-system, sans-serif',
           whiteSpace: 'pre-wrap',
           textAlign: 'left',
           maxWidth: '200px',
+          textShadow: '0 1px 2px rgba(0,0,0,0.3)'
         }}>
           {label || 'Text node...'}
         </div>
+        
+        {selected && (
+          <div style={{
+            position: 'absolute',
+            right: '2px',
+            top: '0px',
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'rgba(30, 41, 59, 0.7)',
+            borderRadius: '4px',
+            padding: '2px',
+          }}>
+            <button 
+              onClick={increaseTextSize} 
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px' }}
+              title="Increase font size"
+            >
+              <ChevronUp size={14} color="#e2e8f0" />
+            </button>
+            <button 
+              onClick={decreaseTextSize} 
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px' }}
+              title="Decrease font size"
+            >
+              <ChevronDown size={14} color="#e2e8f0" />
+            </button>
+          </div>
+        )}
+        
         <Handle
           type="target"
           position={Position.Left}
@@ -162,20 +234,26 @@ const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
         borderWidth: type === 'StartNode' || type === 'EndNode' ? '2px' : '1px',
         borderStyle: 'solid',
         borderColor: getBorderColor(),
-        background: getBgColor(),
+        background: getBgGradient(),
         opacity: isValid === false ? 0.8 : 1,
-        borderRadius: '8px',
-        padding: '8px 12px',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-        minWidth: '120px',
+        borderRadius: '12px',
+        padding: '10px 14px',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow: selected 
+          ? `0 0 0 1px ${getBorderColor()}, 0 0 20px rgba(155, 135, 245, 0.4)` 
+          : '0 4px 10px rgba(0, 0, 0, 0.15)',
+        minWidth: '130px',
         maxWidth: '200px',
         textAlign: 'center',
         fontSize: '14px',
-        fontFamily: 'sans-serif',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        transition: 'box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out',
+        transform: selected ? 'translateY(-2px)' : 'none',
       }}
     >
       {isValid === false && (
@@ -184,11 +262,23 @@ const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
         </div>
       )}
       
-      <div className="service-node__icon" style={{ color: getIconColor(), fontSize: '20px', marginBottom: '4px' }}>
+      <div className="service-node__icon" 
+        style={{ 
+          color: getIconColor(), 
+          fontSize: '20px', 
+          marginBottom: '4px',
+          textShadow: '0 0 10px rgba(255,255,255,0.3)'
+        }}>
         {getIconType()}
       </div>
       
-      <div className="service-node__title" style={{ color: getTextColor(), fontWeight: '500', marginBottom: type === 'ConditionalLogic' ? '2px' : '0px' }}>
+      <div className="service-node__title" 
+        style={{ 
+          color: getTextColor(), 
+          fontWeight: '500', 
+          marginBottom: type === 'ConditionalLogic' ? '2px' : '0px',
+          textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+        }}>
         {label || type}
       </div>
       
@@ -199,7 +289,10 @@ const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
         <Handle
           type="source"
           position={Position.Right}
-          style={{ background: getBorderColor() }}
+          style={{ 
+            background: getBorderColor(),
+            boxShadow: '0 0 5px rgba(155, 135, 245, 0.5)'
+          }}
           isConnectable={isConnectable}
         />
       )}
@@ -208,7 +301,10 @@ const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
         <Handle
           type="target"
           position={Position.Left}
-          style={{ background: getBorderColor() }}
+          style={{ 
+            background: getBorderColor(),
+            boxShadow: '0 0 5px rgba(155, 135, 245, 0.5)'
+          }}
           isConnectable={isConnectable}
         />
       )}

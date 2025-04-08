@@ -112,11 +112,11 @@
 
 /* React Flow Custom Styles */
 .react-flow__node {
-  @apply rounded-md border border-workflow-node-border bg-workflow-node p-2 shadow-md transition-shadow;
+  @apply rounded-xl border border-white/20 backdrop-blur-sm shadow-lg transition-all duration-200;
 }
 
 .react-flow__node.selected {
-  @apply border-workflow-node-selected shadow-lg;
+  @apply border-primary/80 shadow-xl shadow-primary/20 scale-105;
 }
 
 .react-flow__edge {
@@ -132,19 +132,19 @@
 }
 
 .react-flow__handle {
-  @apply h-3 w-3 border-2 border-white bg-workflow-node-border opacity-75;
+  @apply h-3 w-3 border-2 border-white/50 bg-workflow-node-border opacity-75 transition-colors duration-200;
 }
 
 .react-flow__handle-connecting {
-  @apply bg-primary;
+  @apply bg-primary opacity-100 scale-125;
 }
 
 .react-flow__handle-valid {
-  @apply bg-workflow-valid;
+  @apply bg-workflow-valid opacity-100 scale-125;
 }
 
 .react-flow__minimap {
-  @apply rounded-md border border-white/10 bg-black/20 backdrop-blur-md;
+  @apply rounded-xl border border-white/10 bg-black/30 backdrop-blur-md;
 }
 
 .react-flow__attribution {
@@ -152,11 +152,11 @@
 }
 
 .react-flow__controls {
-  @apply rounded-md border border-white/10 bg-black/20 backdrop-blur-md;
+  @apply rounded-xl border border-white/10 bg-black/30 backdrop-blur-md;
 }
 
 .react-flow__controls-button {
-  @apply border-white/10 bg-black/40 text-white hover:bg-black/60;
+  @apply border-white/10 bg-black/40 text-white hover:bg-black/60 transition-colors duration-200;
 }
 
 .react-flow__background {
@@ -169,28 +169,28 @@
 
 /* Dark/Light Theme Variations */
 .react-flow.dark-flow .react-flow__controls-button {
-  @apply bg-gray-800 text-gray-300 hover:bg-gray-700;
+  @apply bg-gray-800/80 text-gray-300 hover:bg-gray-700/80;
 }
 
 .react-flow.dark-flow .react-flow__minimap {
-  @apply bg-gray-900/40;
+  @apply bg-gray-900/60;
 }
 
 .react-flow.dark-flow .react-flow__edge-path {
-  @apply stroke-gray-400;
+  @apply stroke-gray-400/80;
 }
 
 .react-flow.dark-flow .react-flow__handle {
-  @apply border-gray-700 bg-gray-600;
+  @apply border-gray-700/80 bg-gray-600/80;
 }
 
 /* Node styles */
 .service-node {
-  @apply flex min-w-[120px] flex-col items-center justify-center gap-2 transition-all duration-200 hover:shadow-md;
+  @apply flex min-w-[130px] flex-col items-center justify-center gap-2 transition-all duration-300;
 }
 
 .service-node__icon {
-  @apply flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 p-1.5;
+  @apply flex h-10 w-10 items-center justify-center rounded-full bg-primary/30 p-2;
 }
 
 .service-node__title {
@@ -198,18 +198,18 @@
 }
 
 .service-node.invalid {
-  @apply border-workflow-error bg-workflow-error/20;
+  @apply border-workflow-error/80 bg-workflow-error/30;
 }
 
 .service-node.valid {
-  @apply border-workflow-valid bg-workflow-valid/10;
+  @apply border-workflow-valid/80 bg-workflow-valid/20;
 }
 
 /* Dark mode service node styles */
 .dark .service-node {
-  @apply border-gray-700;
+  @apply border-gray-700/80;
 }
 
 .dark .service-node__icon {
-  @apply bg-primary/40;
+  @apply bg-primary/50;
 }
