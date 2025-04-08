@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { Theme } from './ThemeProvider';
 
 interface ControlPanelProps {
   onAddNode: (type: ServiceType) => void;
@@ -24,6 +25,7 @@ interface ControlPanelProps {
   onSave: () => void;
   onImport: () => void;
   onExport: () => void;
+  theme?: Theme;
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -31,7 +33,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onClear,
   onSave,
   onImport,
-  onExport
+  onExport,
+  theme = 'light'
 }) => {
   // Group services by category
   const serviceCategories = {
@@ -61,8 +64,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     ]
   };
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="glass-morphism fixed right-4 top-4 flex flex-col gap-3 rounded-xl p-4 w-[280px] z-10 bg-background/95 shadow-lg backdrop-blur-sm border border-slate-200/50">
+    <div className={`glass-morphism fixed right-4 top-4 flex flex-col gap-3 rounded-xl p-4 w-[280px] z-10 ${isDark ? 'bg-gray-800/95 border-gray-700/50 text-white' : 'bg-background/95 border-slate-200/50'} shadow-lg backdrop-blur-sm`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Workflow className="h-5 w-5 text-primary" />
@@ -70,13 +75,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
         
         <div className="flex gap-1">
-          <Button size="icon" variant="ghost" onClick={onSave} title="Save" className="h-7 w-7 hover:bg-primary/10 hover:text-primary">
+          <Button size="icon" variant="ghost" onClick={onSave} title="Save" className={`h-7 w-7 hover:bg-primary/10 hover:text-primary ${isDark ? 'text-gray-200' : ''}`}>
             <Save className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={onImport} title="Import" className="h-7 w-7 hover:bg-primary/10 hover:text-primary">
+          <Button size="icon" variant="ghost" onClick={onImport} title="Import" className={`h-7 w-7 hover:bg-primary/10 hover:text-primary ${isDark ? 'text-gray-200' : ''}`}>
             <FileUp className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={onExport} title="Export" className="h-7 w-7 hover:bg-primary/10 hover:text-primary">
+          <Button size="icon" variant="ghost" onClick={onExport} title="Export" className={`h-7 w-7 hover:bg-primary/10 hover:text-primary ${isDark ? 'text-gray-200' : ''}`}>
             <Download className="h-4 w-4" />
           </Button>
           <Button size="icon" variant="ghost" onClick={onClear} title="Clear" className="h-7 w-7 hover:bg-red-500/10 hover:text-red-500">
@@ -85,7 +90,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
       </div>
       
-      <Separator className="my-1" />
+      <Separator className={`my-1 ${isDark ? 'bg-gray-700' : ''}`} />
       
       <div className="space-y-3">
         {/* Add Service Dropdown Menu */}
@@ -96,7 +101,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <span>Add Service</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[220px]">
+          <DropdownMenuContent className={`w-[220px] ${isDark ? 'bg-gray-800 border-gray-700 text-white' : ''}`}>
             <DropdownMenuLabel className="flex items-center gap-2">
               <AppWindow className="h-4 w-4 text-blue-500" />
               Entry Points
@@ -112,7 +117,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </DropdownMenuItem>
             ))}
             
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className={isDark ? 'bg-gray-700' : ''} />
             <DropdownMenuLabel className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-green-500" />
               Verification
@@ -128,7 +133,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </DropdownMenuItem>
             ))}
             
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className={isDark ? 'bg-gray-700' : ''} />
             <DropdownMenuLabel className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-blue-500" />
               Documents
@@ -144,7 +149,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </DropdownMenuItem>
             ))}
             
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className={isDark ? 'bg-gray-700' : ''} />
             <DropdownMenuLabel className="flex items-center gap-2">
               <ScanFace className="h-4 w-4 text-cyan-500" />
               Biometrics
@@ -160,7 +165,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </DropdownMenuItem>
             ))}
             
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className={isDark ? 'bg-gray-700' : ''} />
             <DropdownMenuLabel className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-amber-500" />
               Logic & Utilities
@@ -178,12 +183,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="outline" className="w-full justify-start gap-2 border-dashed text-muted-foreground hover:text-primary hover:border-primary">
+        <Button variant="outline" className={`w-full justify-start gap-2 border-dashed ${isDark ? 'text-gray-300 hover:text-primary hover:border-primary' : 'text-muted-foreground hover:text-primary hover:border-primary'}`}>
           <Sparkles className="h-4 w-4" />
           <span>Add Condition</span>
         </Button>
 
-        <Button variant="outline" className="w-full justify-start gap-2 border-dashed text-muted-foreground hover:text-primary hover:border-primary">
+        <Button variant="outline" className={`w-full justify-start gap-2 border-dashed ${isDark ? 'text-gray-300 hover:text-primary hover:border-primary' : 'text-muted-foreground hover:text-primary hover:border-primary'}`}>
           <Package className="h-4 w-4" />
           <span>Add Extra Options</span>
         </Button>

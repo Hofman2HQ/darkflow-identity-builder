@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,12 +14,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { LogicType } from './ServiceNode';
 import type { Node } from '@xyflow/react';
 
+// Define the structure of the config object
+interface NodeConfig {
+  appId?: string;
+  flowName?: string;
+  idTypes?: string;
+  requireSelfie?: boolean;
+  debugMode?: boolean;
+  testFlags?: string;
+  extraNotes?: string;
+  timeout?: number;
+  [key: string]: any; // Allow for other properties
+}
+
+interface NodeData {
+  type: string;
+  label: string;
+  config?: NodeConfig;
+  isValid?: boolean;
+  isEntry?: boolean;
+  logicType?: LogicType;
+}
+
 interface NodeConfigPanelProps {
-  node: Node | null;
+  node: Node<NodeData> | null;
   onClose: () => void;
   onUpdate: (nodeId: string, data: any) => void;
   theme?: 'light' | 'dark';
@@ -43,7 +64,8 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
   };
 
   const handleConfigChange = (key: string, value: any) => {
-    const newConfig = { ...node.data.config, [key]: value };
+    const currentConfig = node.data.config || {};
+    const newConfig = { ...currentConfig, [key]: value };
     onUpdate(node.id, { config: newConfig });
   };
 
@@ -57,7 +79,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
   };
 
   // Initialize freeText from node data if it exists
-  React.useEffect(() => {
+  useEffect(() => {
     if (node?.data?.config?.extraNotes) {
       setFreeText(node.data.config.extraNotes);
       setExtraType('freeText');
