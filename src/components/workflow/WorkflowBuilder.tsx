@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,
@@ -14,12 +15,14 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button } from '@/components/ui/button';
+import { Moon, Sun } from 'lucide-react';
 
 import ServiceNode, { ServiceType, LogicType } from './ServiceNode';
 import ControlPanel from './ControlPanel';
 import NodeConfigPanel from './NodeConfigPanel';
 import ConnectionConfigPanel from './ConnectionConfigPanel';
 import { toast } from '@/hooks/use-toast';
+import { useTheme } from './ThemeProvider';
 
 const nodeTypes = {
   serviceNode: ServiceNode,
@@ -48,6 +51,7 @@ const WorkflowBuilder: React.FC = () => {
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const { theme, toggleTheme } = useTheme();
   
   const validateWorkflow = useCallback(() => {
     const webAppNodes = nodes.filter(n => n.data.type === 'WebApp');
@@ -179,6 +183,15 @@ const WorkflowBuilder: React.FC = () => {
         return edge;
       })
     );
+  }, [setEdges]);
+  
+  const deleteEdge = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.filter(e => e.id !== edgeId));
+    setSelectedEdge(null);
+    toast({
+      title: "Connection Deleted",
+      description: "The connection has been removed from your workflow.",
+    });
   }, [setEdges]);
   
   const addNode = useCallback((type: ServiceType) => {
@@ -334,7 +347,7 @@ const WorkflowBuilder: React.FC = () => {
   }, [nodes, edges, validateWorkflow]);
   
   return (
-    <div className="h-screen bg-gradient-to-br from-indigo-50 to-slate-100" ref={reactFlowWrapper}>
+    <div className={`h-screen ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 to-slate-800' : 'bg-gradient-to-br from-indigo-50 to-slate-100'}`} ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -348,36 +361,55 @@ const WorkflowBuilder: React.FC = () => {
         fitView
         snapToGrid
         onInit={setReactFlowInstance}
-        className="workflow-canvas"
+        className={`workflow-canvas ${theme === 'dark' ? 'dark-flow' : ''}`}
         defaultEdgeOptions={{ 
-          style: { strokeWidth: 2, stroke: '#9b87f5' },
+          style: { strokeWidth: 2, stroke: theme === 'dark' ? '#9b87f5' : '#9b87f5' },
           animated: true
         }}
       >
-        <Controls className="bg-white/70 backdrop-blur-sm shadow-md rounded-lg border border-slate-200/50" />
+        <Controls className={`${theme === 'dark' ? 'bg-gray-800/70' : 'bg-white/70'} backdrop-blur-sm shadow-md rounded-lg border ${theme === 'dark' ? 'border-gray-700/50' : 'border-slate-200/50'}`} />
         <MiniMap 
           nodeBorderRadius={8} 
-          className="bg-white/70 backdrop-blur-sm shadow-md rounded-lg border border-slate-200/50" 
+          className={`${theme === 'dark' ? 'bg-gray-800/70' : 'bg-white/70'} backdrop-blur-sm shadow-md rounded-lg border ${theme === 'dark' ? 'border-gray-700/50' : 'border-slate-200/50'}`}
           nodeColor={(node) => {
             switch (node.data?.type) {
-              case 'WebApp': return '#60a5fa'; // blue
-              case 'IDV': return '#4ade80'; // green
-              case 'Media': return '#c084fc'; // purple
-              case 'PII': return '#f472b6'; // pink
-              case 'ConditionalLogic': return '#fbbf24'; // amber
-              default: return '#94a3b8'; // slate
+              case 'WebApp': return theme === 'dark' ? '#60a5fa' : '#60a5fa'; // blue
+              case 'IDV': return theme === 'dark' ? '#4ade80' : '#4ade80'; // green
+              case 'Media': return theme === 'dark' ? '#c084fc' : '#c084fc'; // purple
+              case 'PII': return theme === 'dark' ? '#f472b6' : '#f472b6'; // pink
+              case 'ConditionalLogic': return theme === 'dark' ? '#fbbf24' : '#fbbf24'; // amber
+              default: return theme === 'dark' ? '#94a3b8' : '#94a3b8'; // slate
             }
           }}
         />
-        <Background gap={20} size={1} color="#e2e8f0" className="bg-white/30" />
+        <Background 
+          gap={20} 
+          size={1} 
+          color={theme === 'dark' ? '#374151' : '#e2e8f0'} 
+          className={theme === 'dark' ? 'bg-gray-900/30' : 'bg-white/30'} 
+        />
         
         <Panel position="bottom-center" className="p-2">
           <Button 
             variant="default" 
             onClick={validateWorkflow}
-            className="bg-gradient-to-r from-primary/90 to-primary hover:from-primary hover:to-primary/90 shadow-md px-6"
+            className={`${theme === 'dark' 
+              ? 'bg-gradient-to-r from-primary/90 to-primary hover:from-primary hover:to-primary/90' 
+              : 'bg-gradient-to-r from-primary/90 to-primary hover:from-primary hover:to-primary/90'} 
+              shadow-md px-6`}
           >
             Validate Workflow
+          </Button>
+        </Panel>
+        
+        <Panel position="top-right" className="p-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleTheme}
+            className={`rounded-full ${theme === 'dark' ? 'bg-gray-800 text-yellow-400' : 'bg-white text-indigo-600'}`}
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </Button>
         </Panel>
       </ReactFlow>
@@ -388,6 +420,7 @@ const WorkflowBuilder: React.FC = () => {
         onSave={saveWorkflow}
         onImport={importWorkflow}
         onExport={exportWorkflow}
+        theme={theme}
       />
       
       {selectedNode && (
@@ -395,6 +428,7 @@ const WorkflowBuilder: React.FC = () => {
           node={selectedNode}
           onClose={() => setSelectedNode(null)}
           onUpdate={updateNodeData}
+          theme={theme}
         />
       )}
       
@@ -403,6 +437,8 @@ const WorkflowBuilder: React.FC = () => {
           edge={selectedEdge}
           onClose={() => setSelectedEdge(null)}
           onUpdate={updateEdgeData}
+          onDelete={deleteEdge}
+          theme={theme}
         />
       )}
     </div>

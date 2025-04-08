@@ -44,6 +44,28 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 252 59% 57%;
   }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 252 59% 57%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 291 91% 73%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+  }
 }
 
 @layer base {
@@ -145,6 +167,23 @@
   @apply text-xs font-medium text-white/80;
 }
 
+/* Dark/Light Theme Variations */
+.react-flow.dark-flow .react-flow__controls-button {
+  @apply bg-gray-800 text-gray-300 hover:bg-gray-700;
+}
+
+.react-flow.dark-flow .react-flow__minimap {
+  @apply bg-gray-900/40;
+}
+
+.react-flow.dark-flow .react-flow__edge-path {
+  @apply stroke-gray-400;
+}
+
+.react-flow.dark-flow .react-flow__handle {
+  @apply border-gray-700 bg-gray-600;
+}
+
 /* Node styles */
 .service-node {
   @apply flex min-w-[120px] flex-col items-center justify-center gap-2 transition-all duration-200 hover:shadow-md;
@@ -164,4 +203,13 @@
 
 .service-node.valid {
   @apply border-workflow-valid bg-workflow-valid/10;
+}
+
+/* Dark mode service node styles */
+.dark .service-node {
+  @apply border-gray-700;
+}
+
+.dark .service-node__icon {
+  @apply bg-primary/40;
 }
