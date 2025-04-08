@@ -16,6 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import type { Node } from '@xyflow/react';
 import type { ServiceType, LogicType } from './ServiceNode';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
 
 interface NodeConfigPanelProps {
   node: Node | null;
@@ -66,6 +68,23 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
                 className="mt-1"
               />
             </div>
+            <div className="mt-4">
+              <Label htmlFor="startPoint">Start Point</Label>
+              <Select 
+                value={config.startPoint || ''} 
+                onValueChange={(value: string) => handleChange('startPoint', value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select start point" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="userRegistration">User Registration</SelectItem>
+                  <SelectItem value="loginFlow">Login Flow</SelectItem>
+                  <SelectItem value="verification">Verification Process</SelectItem>
+                  <SelectItem value="custom">Custom Entry Point</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </>
         );
       
@@ -111,6 +130,23 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
                 onCheckedChange={(checked) => handleChange('requireFace', checked)}
               />
             </div>
+            <div className="mt-4">
+              <Label htmlFor="endPoint">End Point</Label>
+              <Select 
+                value={config.endPoint || ''} 
+                onValueChange={(value: string) => handleChange('endPoint', value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select end point" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="approved">Approval</SelectItem>
+                  <SelectItem value="rejected">Rejection</SelectItem>
+                  <SelectItem value="review">Manual Review</SelectItem>
+                  <SelectItem value="redirect">Redirect User</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </>
         );
       
@@ -154,6 +190,22 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
                 </div>
               </div>
             </div>
+            <div className="mt-4">
+              <Label htmlFor="serviceType">Service Type</Label>
+              <Select 
+                value={config.serviceType || ''} 
+                onValueChange={(value: string) => handleChange('serviceType', value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select service type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">Standard Processing</SelectItem>
+                  <SelectItem value="premium">Premium (Priority)</SelectItem>
+                  <SelectItem value="batch">Batch Processing</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </>
         );
       
@@ -169,6 +221,23 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
                 className="min-h-[100px] mt-1"
               />
             </div>
+            <div className="mt-4">
+              <Label htmlFor="noteType">Note Type</Label>
+              <Select 
+                value={config.noteType || ''} 
+                onValueChange={(value: string) => handleChange('noteType', value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select note type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="info">Information</SelectItem>
+                  <SelectItem value="warning">Warning</SelectItem>
+                  <SelectItem value="error">Error</SelectItem>
+                  <SelectItem value="debug">Debug Note</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </>
         );
 
@@ -181,7 +250,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
                 value={node.data.logicType as string || "Success"} 
                 onValueChange={(value: string) => handleLogicTypeChange(value as LogicType)}
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 w-full">
                   <SelectValue placeholder="Select logic type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -189,6 +258,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
                   <SelectItem value="Failed">Failed</SelectItem>
                   <SelectItem value="Conditional">Conditional (if/else)</SelectItem>
                   <SelectItem value="Indecisive">Indecisive</SelectItem>
+                  <SelectItem value="Custom">Custom/Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -202,22 +272,87 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
                   className="mt-1"
                   placeholder="e.g., IDV country == 'US'"
                 />
+                <div className="mt-4">
+                  <Label htmlFor="conditionType">Condition Type</Label>
+                  <Select 
+                    value={config.conditionType || ''} 
+                    onValueChange={(value: string) => handleChange('conditionType', value)}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select condition type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="equals">Equals</SelectItem>
+                      <SelectItem value="contains">Contains</SelectItem>
+                      <SelectItem value="greaterThan">Greater Than</SelectItem>
+                      <SelectItem value="lessThan">Less Than</SelectItem>
+                      <SelectItem value="regex">Regex Match</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
+            {node.data.logicType === "Custom" && (
+              <div className="mt-4">
+                <Label htmlFor="customLogic">Custom Logic</Label>
+                <Textarea 
+                  id="customLogic" 
+                  value={config.customLogic || ''} 
+                  onChange={(e) => handleChange('customLogic', e.target.value)}
+                  className="min-h-[100px] mt-1"
+                  placeholder="Define your custom logic here..."
+                />
+              </div>
+            )}
+            <div className="mt-4">
+              <Label htmlFor="extras">Additional Options</Label>
+              <Select 
+                value={config.extras || ''} 
+                onValueChange={(value: string) => handleChange('extras', value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select additional options" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="debug">Debug Mode</SelectItem>
+                  <SelectItem value="logging">Enable Logging</SelectItem>
+                  <SelectItem value="notification">Send Notifications</SelectItem>
+                  <SelectItem value="retry">Auto Retry On Failure</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </>
         );
         
       default:
         return (
-          <div className="text-sm text-muted-foreground">
-            No specific configuration available for this service type.
-          </div>
+          <>
+            <div className="text-sm text-muted-foreground">
+              No specific configuration available for this service type.
+            </div>
+            <div className="mt-4">
+              <Label htmlFor="serviceOptions">Service Options</Label>
+              <Select 
+                value={config.serviceOptions || ''} 
+                onValueChange={(value: string) => handleChange('serviceOptions', value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select service options" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
         );
     }
   };
 
   return (
-    <div className="glass-morphism fixed right-4 bottom-4 w-[300px] rounded-lg p-4 animate-fade-in z-10">
+    <div className="glass-morphism fixed right-4 bottom-4 w-[300px] rounded-lg p-4 animate-fade-in z-10 bg-background/95 shadow-lg backdrop-blur-sm">
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-semibold">{label} Configuration</h3>
         <Button size="icon" variant="ghost" onClick={onClose} className="h-6 w-6">

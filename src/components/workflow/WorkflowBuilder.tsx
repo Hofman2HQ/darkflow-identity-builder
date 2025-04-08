@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,
@@ -90,7 +89,7 @@ const WorkflowBuilder: React.FC = () => {
     }
     
     return true;
-  }, [nodes, edges, setNodes, toast]);
+  }, [nodes, edges, setNodes]);
   
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
@@ -108,15 +107,43 @@ const WorkflowBuilder: React.FC = () => {
   }, []);
   
   const onConnect = useCallback((params: Connection) => {
+    const sourceNode = nodes.find(n => n.id === params.source);
+    let defaultLabel = 'Connection';
+    let defaultConditionType = 'match';
+    
+    if (sourceNode && sourceNode.data.type === 'ConditionalLogic') {
+      const logicType = sourceNode.data.logicType as LogicType;
+      if (logicType === 'Success') {
+        defaultLabel = 'On Success';
+        defaultConditionType = 'success';
+      } else if (logicType === 'Failed') {
+        defaultLabel = 'On Failure';
+        defaultConditionType = 'failure';
+      } else if (logicType === 'Conditional') {
+        defaultLabel = 'If Condition Met';
+        defaultConditionType = 'condition';
+      } else if (logicType === 'Indecisive') {
+        defaultLabel = 'On Review';
+        defaultConditionType = 'review';
+      } else if (logicType === 'Custom') {
+        defaultLabel = 'Custom Path';
+        defaultConditionType = 'custom';
+      }
+    }
+    
     const edgeId = `e${params.source}-${params.target}`;
     const newEdge = {
       ...params,
       id: edgeId,
       animated: true,
-      data: { conditionType: 'match', label: 'On Match' }
+      data: { 
+        conditionType: defaultConditionType, 
+        label: defaultLabel 
+      },
+      label: defaultLabel
     };
     setEdges((eds) => addEdge(newEdge as Edge, eds));
-  }, [setEdges]);
+  }, [nodes, setEdges]);
   
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     setNodes((nds) =>
@@ -193,6 +220,13 @@ const WorkflowBuilder: React.FC = () => {
     };
 
     setNodes((nds) => [...nds, newNode]);
+    
+    if (type === 'ConditionalLogic') {
+      toast({
+        title: "Conditional Logic Added",
+        description: "Click on the node to configure the logic type using the dropdown menu.",
+      });
+    }
   }, [nodes, reactFlowInstance, setNodes, toast]);
   
   const clearWorkflow = useCallback(() => {
@@ -210,7 +244,7 @@ const WorkflowBuilder: React.FC = () => {
       title: "Workflow Cleared",
       description: "All nodes except WebApp have been removed.",
     });
-  }, [nodes, setNodes, setEdges, toast]);
+  }, [nodes, setNodes, setEdges]);
   
   const saveWorkflow = useCallback(() => {
     const isValid = validateWorkflow();
@@ -236,7 +270,7 @@ const WorkflowBuilder: React.FC = () => {
       title: "Workflow Saved",
       description: "Your workflow has been saved successfully.",
     });
-  }, [nodes, edges, validateWorkflow, toast]);
+  }, [nodes, edges, validateWorkflow]);
   
   const importWorkflow = useCallback(() => {
     try {
@@ -263,7 +297,7 @@ const WorkflowBuilder: React.FC = () => {
         variant: "destructive"
       });
     }
-  }, [setNodes, setEdges, toast]);
+  }, [setNodes, setEdges]);
   
   const exportWorkflow = useCallback(() => {
     const isValid = validateWorkflow();
@@ -296,10 +330,7 @@ const WorkflowBuilder: React.FC = () => {
       title: "Workflow Exported",
       description: "Your workflow has been exported as JSON.",
     });
-  }, [nodes, edges, validateWorkflow, toast]);
-  
-  useEffect(() => {
-  }, []);
+  }, [nodes, edges, validateWorkflow]);
   
   return (
     <div className="h-screen" ref={reactFlowWrapper}>
