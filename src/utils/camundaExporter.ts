@@ -51,7 +51,7 @@ export const transformToCamunda = (nodes: Node[], edges: Edge[]): CamundaWorkflo
     if (node.data.type === 'EndNode') return;
     
     // Skip description boxes and other non-service nodes
-    if (['StartNode', 'DescriptionBox', 'TextNode'].includes(node.data.type)) return;
+    if (['StartNode', 'DescriptionBox', 'TextNode'].includes(node.data.type as string)) return;
 
     // Find outgoing edges for the node
     const outgoingEdges = edges.filter(edge => edge.source === node.id);
@@ -61,7 +61,7 @@ export const transformToCamunda = (nodes: Node[], edges: Edge[]): CamundaWorkflo
       // Find the target node
       const targetNode = nodes.find(n => n.id === edge.target);
       // Check if the target is a service
-      return targetNode && !['EndNode', 'StartNode', 'DescriptionBox', 'TextNode', 'ConditionalLogic', 'Condition'].includes(targetNode.data.type);
+      return targetNode && !['EndNode', 'StartNode', 'DescriptionBox', 'TextNode', 'ConditionalLogic', 'Condition'].includes(targetNode.data.type as string);
     });
     
     if (parallelEdges.length > 1 && node.data.type !== 'Condition') {
@@ -110,7 +110,7 @@ export const transformToCamunda = (nodes: Node[], edges: Edge[]): CamundaWorkflo
       
       if (matchEdge && matchEdge.data?.camundaCondition) {
         conditions.push({
-          condition: matchEdge.data.camundaCondition,
+          condition: matchEdge.data.camundaCondition as string,
           goToStep: matchEdge.target
         });
       } else if (matchEdge) {
@@ -136,7 +136,7 @@ export const transformToCamunda = (nodes: Node[], edges: Edge[]): CamundaWorkflo
       const serviceStep: CamundaStep = {
         type: 'service',
         id: node.id,
-        service: node.data.type.toLowerCase()
+        service: typeof node.data.type === 'string' ? node.data.type.toLowerCase() : 'unknown'
       };
       
       if (outgoingEdges.length > 0) {
@@ -148,13 +148,13 @@ export const transformToCamunda = (nodes: Node[], edges: Edge[]): CamundaWorkflo
             let condition = "${true}"; // Default condition
             
             if (edge.data?.camundaCondition) {
-              condition = edge.data.camundaCondition;
+              condition = edge.data.camundaCondition as string;
             } else if (edge.data?.conditionType === 'match') {
               condition = "${result.success == true}";
             } else if (edge.data?.conditionType === 'nomatch') {
               condition = "${result.success == false}";
             } else if (edge.data?.conditionType === 'custom' && edge.data?.customLogic) {
-              condition = `\${${edge.data.customLogic}}`;
+              condition = `\${${edge.data.customLogic as string}}`;
             }
             
             return {
@@ -242,3 +242,4 @@ export const validateCamundaWorkflow = (workflow: CamundaWorkflow): string[] => 
   
   return errors;
 };
+
