@@ -17,7 +17,7 @@ export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Get theme from localStorage or use default
+    // Get theme from localStorage or use default (changed from unspecified to 'light')
     const savedTheme = localStorage.getItem('workflow-theme');
     return (savedTheme as Theme) || 'light';
   });

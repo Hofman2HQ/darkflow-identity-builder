@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Check } from 'lucide-react';
+import { X, Plus, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -65,6 +65,14 @@ const ConditionPanel: React.FC<ConditionPanelProps> = ({
     setConditions(updatedConditions);
   };
 
+  const deleteCondition = (index: number) => {
+    // Don't allow deleting the last condition
+    if (conditions.length <= 1) return;
+    
+    const updatedConditions = conditions.filter((_, i) => i !== index);
+    setConditions(updatedConditions);
+  };
+
   const handleSubmit = () => {
     onSubmit(conditions);
     setConditions([{
@@ -99,10 +107,20 @@ const ConditionPanel: React.FC<ConditionPanelProps> = ({
           {conditions.map((condition, index) => (
             <div 
               key={index} 
-              className={`p-6 rounded-lg mb-4 ${isDark 
+              className={`p-6 rounded-lg mb-4 relative ${isDark 
                 ? 'bg-gray-700/50 backdrop-blur-sm border border-gray-600/50' 
                 : 'bg-gray-50/80 backdrop-blur-sm border border-gray-200/50'}`}
             >
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => deleteCondition(index)}
+                className={`absolute top-2 right-2 p-1.5 ${conditions.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={conditions.length <= 1}
+              >
+                <Trash2 className="h-4 w-4 text-gray-500" />
+              </Button>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor={`service-${index}`} className={`mb-2 block ${isDark ? 'text-gray-200' : ''}`}>
