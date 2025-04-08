@@ -30,8 +30,8 @@ interface NodeConfig {
   [key: string]: any; // Allow for other properties
 }
 
-// NodeData is the type for the data property of a Node
-interface NodeData {
+// FlowNodeData is the type for the data property of a Node
+interface FlowNodeData {
   type: string;
   label: string;
   config?: NodeConfig;
@@ -41,7 +41,7 @@ interface NodeData {
 }
 
 interface NodeConfigPanelProps {
-  node: Node<NodeData> | null;
+  node: Node<FlowNodeData> | null;
   onClose: () => void;
   onUpdate: (nodeId: string, data: any) => void;
   theme?: 'light' | 'dark';

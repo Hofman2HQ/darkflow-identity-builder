@@ -11,7 +11,8 @@ import {
   Connection,
   Edge,
   Node,
-  Panel
+  Panel,
+  NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button } from '@/components/ui/button';
@@ -38,8 +39,8 @@ interface NodeConfig {
   [key: string]: any;
 }
 
-// NodeData is the type for the data property of a Node
-interface NodeData {
+// NodeData type for the data property of Node
+interface FlowNodeData {
   type: string;
   label: string;
   config?: NodeConfig;
@@ -48,20 +49,11 @@ interface NodeData {
   logicType?: LogicType;
 }
 
-interface ControlPanelProps {
-  onAddNode: (type: ServiceType) => void;
-  onClear: () => void;
-  onSave: () => void;
-  onImport: () => void;
-  onExport: () => void;
-  theme: Theme;
-}
-
-const nodeTypes = {
+const nodeTypes: NodeTypes = {
   serviceNode: ServiceNode,
 };
 
-const initialNodes: Node<NodeData>[] = [
+const initialNodes: Node<FlowNodeData>[] = [
   {
     id: 'webapp-1',
     type: 'serviceNode',
@@ -78,9 +70,9 @@ const initialNodes: Node<NodeData>[] = [
 const initialEdges: Edge[] = [];
 
 const WorkflowBuilder: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeData>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node<FlowNodeData> | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
@@ -128,7 +120,7 @@ const WorkflowBuilder: React.FC = () => {
     return true;
   }, [nodes, edges, setNodes]);
   
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node<NodeData>) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node<FlowNodeData>) => {
     setSelectedNode(node);
     setSelectedEdge(null);
   }, []);
@@ -144,44 +136,16 @@ const WorkflowBuilder: React.FC = () => {
   }, []);
   
   const onConnect = useCallback((params: Connection) => {
-    const sourceNode = nodes.find(n => n.id === params.source);
-    let defaultLabel = 'Connection';
-    let defaultConditionType = 'match';
-    
-    if (sourceNode && sourceNode.data.type === 'ConditionalLogic') {
-      const logicType = sourceNode.data.logicType as LogicType;
-      if (logicType === 'Success') {
-        defaultLabel = 'On Success';
-        defaultConditionType = 'success';
-      } else if (logicType === 'Failed') {
-        defaultLabel = 'On Failure';
-        defaultConditionType = 'failure';
-      } else if (logicType === 'Conditional') {
-        defaultLabel = 'If Condition Met';
-        defaultConditionType = 'condition';
-      } else if (logicType === 'Indecisive') {
-        defaultLabel = 'On Review';
-        defaultConditionType = 'review';
-      } else if (logicType === 'Custom') {
-        defaultLabel = 'Custom Path';
-        defaultConditionType = 'custom';
-      }
-    }
-    
+    // Simplified connection - no labels or extra properties, just animated edges
     const edgeId = `e${params.source}-${params.target}`;
     const newEdge = {
       ...params,
       id: edgeId,
       animated: true,
-      data: { 
-        conditionType: defaultConditionType, 
-        label: defaultLabel 
-      },
-      label: defaultLabel,
       style: { stroke: '#9b87f5', strokeWidth: 2 }
     };
     setEdges((eds) => addEdge(newEdge as Edge, eds));
-  }, [nodes, setEdges]);
+  }, [setEdges]);
   
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     setNodes((nds) =>
@@ -244,7 +208,7 @@ const WorkflowBuilder: React.FC = () => {
       y: Math.random() * 300 + 50,
     });
 
-    let nodeData: NodeData = { 
+    let nodeData: FlowNodeData = { 
       type, 
       label: type, 
       config: {} 
@@ -254,7 +218,7 @@ const WorkflowBuilder: React.FC = () => {
       nodeData.logicType = 'Success';
     }
 
-    const newNode: Node<NodeData> = {
+    const newNode: Node<FlowNodeData> = {
       id: `${type.toLowerCase()}-${Date.now()}`,
       type: 'serviceNode',
       position,

@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -16,6 +17,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import type { Theme } from './ThemeProvider';
 
 interface ControlPanelProps {
@@ -35,6 +39,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onExport,
   theme = 'light'
 }) => {
+  const [showOptionsDropdown, setShowOptionsDropdown] = useState(false);
+  const [freeText, setFreeText] = useState('');
+
   // Group services by category
   const serviceCategories = {
     entry: [
@@ -187,10 +194,40 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           <span>Add Condition</span>
         </Button>
 
-        <Button variant="outline" className={`w-full justify-start gap-2 border-dashed ${isDark ? 'text-gray-300 hover:text-primary hover:border-primary' : 'text-muted-foreground hover:text-primary hover:border-primary'}`}>
-          <Package className="h-4 w-4" />
-          <span>Add Extra Options</span>
-        </Button>
+        {/* Add Extra Options with Dropdown */}
+        <DropdownMenu open={showOptionsDropdown} onOpenChange={setShowOptionsDropdown}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className={`w-full justify-start gap-2 border-dashed ${isDark ? 'text-gray-300 hover:text-primary hover:border-primary' : 'text-muted-foreground hover:text-primary hover:border-primary'}`}>
+              <Package className="h-4 w-4" />
+              <span>Add Extra Options</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className={`w-[280px] p-3 ${isDark ? 'bg-gray-800 border-gray-700 text-white' : ''}`}>
+            <div className="space-y-3">
+              <DropdownMenuLabel>Extra Options</DropdownMenuLabel>
+              <div>
+                <Label htmlFor="freeTextOption" className={isDark ? 'text-gray-200' : ''}>Free Text</Label>
+                <Textarea 
+                  id="freeTextOption" 
+                  placeholder="Enter your notes, custom instructions, or other text here..."
+                  className={`min-h-[80px] mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
+                  value={freeText}
+                  onChange={(e) => setFreeText(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => setShowOptionsDropdown(false)}
+                  className="mt-2"
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
