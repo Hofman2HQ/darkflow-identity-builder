@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle2, Copy } from 'lucide-react';
 import {
   Dialog,
@@ -32,7 +32,14 @@ const CamundaExportDialog: React.FC<CamundaExportDialogProps> = ({
   const [copied, setCopied] = useState(false);
   const [exportErrors, setExportErrors] = useState<string[]>([]);
   
-  const handleExport = () => {
+  // Reset errors when nodes or edges change or when dialog opens
+  useEffect(() => {
+    if (open) {
+      validateWorkflow();
+    }
+  }, [open, nodes, edges]);
+  
+  const validateWorkflow = () => {
     try {
       // Transform the workflow
       const camundaWorkflow = transformToCamunda(nodes, edges);
@@ -40,10 +47,19 @@ const CamundaExportDialog: React.FC<CamundaExportDialogProps> = ({
       // Validate the workflow
       const errors = validateCamundaWorkflow(camundaWorkflow);
       
-      if (errors.length > 0) {
-        setExportErrors(errors);
-        return;
-      }
+      setExportErrors(errors);
+      return errors.length === 0;
+    } catch (error) {
+      console.error('Export validation error:', error);
+      setExportErrors([error instanceof Error ? error.message : 'Unknown error during export']);
+      return false;
+    }
+  };
+  
+  const handleExport = () => {
+    try {
+      // Transform the workflow
+      const camundaWorkflow = transformToCamunda(nodes, edges);
       
       // Copy to clipboard
       navigator.clipboard.writeText(JSON.stringify(camundaWorkflow, null, 2));
@@ -64,14 +80,6 @@ const CamundaExportDialog: React.FC<CamundaExportDialogProps> = ({
     try {
       // Transform the workflow
       const camundaWorkflow = transformToCamunda(nodes, edges);
-      
-      // Validate the workflow
-      const errors = validateCamundaWorkflow(camundaWorkflow);
-      
-      if (errors.length > 0) {
-        setExportErrors(errors);
-        return;
-      }
       
       // Create a download link
       const jsonString = JSON.stringify(camundaWorkflow, null, 2);
@@ -95,7 +103,7 @@ const CamundaExportDialog: React.FC<CamundaExportDialogProps> = ({
   };
   
   const clearErrors = () => {
-    setExportErrors([]);
+    validateWorkflow();
   };
   
   const isDark = theme === 'dark';
