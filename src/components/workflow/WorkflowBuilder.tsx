@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,
@@ -15,7 +16,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Button } from '@/components/ui/button';
 
-import ServiceNode, { ServiceType } from './ServiceNode';
+import ServiceNode, { ServiceType, LogicType } from './ServiceNode';
 import ControlPanel from './ControlPanel';
 import NodeConfigPanel from './NodeConfigPanel';
 import ConnectionConfigPanel from './ConnectionConfigPanel';

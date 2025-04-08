@@ -178,8 +178,8 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
             <div>
               <Label htmlFor="logicType">Logic Type</Label>
               <Select 
-                value={node.data.logicType || "Success"} 
-                onValueChange={(value: LogicType) => handleLogicTypeChange(value)}
+                value={node.data.logicType as string || "Success"} 
+                onValueChange={(value: string) => handleLogicTypeChange(value as LogicType)}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select logic type" />
@@ -232,7 +232,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
           <Label htmlFor="nodeName">Node Name</Label>
           <Input 
             id="nodeName" 
-            value={node.data.label} 
+            value={node.data.label as string} 
             onChange={(e) => onUpdate(node.id, { label: e.target.value })}
             className="mt-1"
           />
