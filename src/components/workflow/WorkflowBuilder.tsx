@@ -25,6 +25,12 @@ import ConnectionConfigPanel from './ConnectionConfigPanel';
 import { toast } from '@/hooks/use-toast';
 import { useTheme } from './ThemeProvider';
 import { Theme } from './ThemeProvider';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 // Define the structure of the node config
 interface NodeConfig {
@@ -93,6 +99,7 @@ const WorkflowBuilder: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node<FlowNodeData> | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
+  const [configPanelOpen, setConfigPanelOpen] = useState<boolean>(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const { theme, toggleTheme } = useTheme();
@@ -226,10 +233,11 @@ const WorkflowBuilder: React.FC = () => {
     setSelectedEdge(null);
   }, []);
   
-  // New double-click handler for nodes to open the config panel
+  // Node double-click handler to open the config panel
   const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node<FlowNodeData>) => {
     setSelectedNode(node);
     setSelectedEdge(null);
+    setConfigPanelOpen(true);
   }, []);
   
   const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
@@ -280,6 +288,7 @@ const WorkflowBuilder: React.FC = () => {
         return node;
       })
     );
+    setConfigPanelOpen(false);
   }, [setNodes]);
   
   const updateEdgeData = useCallback((edgeId: string, newData: any) => {
@@ -632,15 +641,6 @@ const WorkflowBuilder: React.FC = () => {
         theme={theme}
       />
       
-      {selectedNode && selectedNode.id === document.activeElement?.id && (
-        <NodeConfigPanel
-          node={selectedNode}
-          onClose={() => setSelectedNode(null)}
-          onUpdate={updateNodeData}
-          theme={theme}
-        />
-      )}
-      
       {selectedEdge && (
         <ConnectionConfigPanel
           edge={selectedEdge}
@@ -650,6 +650,23 @@ const WorkflowBuilder: React.FC = () => {
           theme={theme}
         />
       )}
+      
+      {/* Dialog for node configuration */}
+      <Dialog open={configPanelOpen} onOpenChange={setConfigPanelOpen}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-gray-800 text-white border-gray-700' : ''} max-w-md`}>
+          <DialogHeader>
+            <DialogTitle>Configure Node</DialogTitle>
+          </DialogHeader>
+          {selectedNode && (
+            <NodeConfigPanel
+              node={selectedNode}
+              onClose={() => setConfigPanelOpen(false)}
+              onUpdate={updateNodeData}
+              theme={theme}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

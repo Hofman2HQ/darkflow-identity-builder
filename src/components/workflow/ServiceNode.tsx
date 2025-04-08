@@ -22,7 +22,6 @@ const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
     if (isValid === false) return '#fee2e2'; // light red for invalid
     if (type === 'EndNode') return '#fef2f2'; // very light red for end
     if (type === 'StartNode') return '#f0fdf4'; // very light green for start
-    if (type === 'TextNode') return 'transparent'; // transparent for text node
     if (type === 'WebApp') return '#eff6ff'; // very light blue
     if (type === 'IDV') return '#f0fdf4'; // very light green
     if (type === 'Media') return '#faf5ff'; // very light purple
@@ -164,7 +163,19 @@ const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
         borderStyle: 'solid',
         borderColor: getBorderColor(),
         background: getBgColor(),
-        opacity: isValid === false ? 0.8 : 1
+        opacity: isValid === false ? 0.8 : 1,
+        borderRadius: '8px',
+        padding: '8px 12px',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+        minWidth: '120px',
+        maxWidth: '200px',
+        textAlign: 'center',
+        fontSize: '14px',
+        fontFamily: 'sans-serif',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
       }}
     >
       {isValid === false && (
@@ -173,11 +184,11 @@ const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
         </div>
       )}
       
-      <div className="service-node__icon" style={{ color: getIconColor() }}>
+      <div className="service-node__icon" style={{ color: getIconColor(), fontSize: '20px', marginBottom: '4px' }}>
         {getIconType()}
       </div>
       
-      <div className="service-node__title" style={{ color: getTextColor() }}>
+      <div className="service-node__title" style={{ color: getTextColor(), fontWeight: '500', marginBottom: type === 'ConditionalLogic' ? '2px' : '0px' }}>
         {label || type}
       </div>
       
