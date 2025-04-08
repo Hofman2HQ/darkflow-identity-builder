@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,
@@ -47,6 +46,7 @@ interface FlowNodeData {
   isValid?: boolean;
   isEntry?: boolean;
   logicType?: LogicType;
+  description?: string;
   [key: string]: any; // Add index signature for string keys
 }
 
@@ -56,22 +56,39 @@ const nodeTypes: NodeTypes = {
 
 const initialNodes: Node<FlowNodeData>[] = [
   {
-    id: 'webapp-1',
+    id: 'start-node',
     type: 'serviceNode',
     position: { x: 250, y: 50 },
     data: { 
+      type: 'StartNode', 
+      label: 'Start', 
+      isEntry: true,
+    },
+  },
+  {
+    id: 'webapp-1',
+    type: 'serviceNode',
+    position: { x: 250, y: 150 },
+    data: { 
       type: 'WebApp', 
       label: 'WebApp Entry', 
-      isEntry: true,
       config: { appId: 'default-app', flowName: 'ID Verification Flow' }
     },
   },
 ];
 
-const initialEdges: Edge[] = [];
+const initialEdges: Edge[] = [
+  {
+    id: 'e-start-webapp',
+    source: 'start-node',
+    target: 'webapp-1',
+    animated: true,
+    style: { stroke: '#9b87f5', strokeWidth: 2 }
+  }
+];
 
 const WorkflowBuilder: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeData>(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<FlowNodeData>>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node<FlowNodeData> | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
@@ -80,19 +97,48 @@ const WorkflowBuilder: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   
   const validateWorkflow = useCallback(() => {
+    // Check for start node
+    const startNodes = nodes.filter(n => n.data.type === 'StartNode');
+    const hasOneStartNode = startNodes.length === 1;
+    
+    // Check for end nodes
+    const endNodes = nodes.filter(n => n.data.type === 'EndNode');
+    const hasEndNode = endNodes.length >= 1;
+    
+    // Check for WebApp node
     const webAppNodes = nodes.filter(n => n.data.type === 'WebApp');
     const hasOneWebApp = webAppNodes.length === 1;
     
     const updatedNodes = nodes.map(node => {
       let isValid = true;
       
+      // Start node validation
+      if (node.data.type === 'StartNode' && !hasOneStartNode) {
+        isValid = false;
+      }
+      
+      // WebApp validation
       if (node.data.type === 'WebApp' && !hasOneWebApp) {
         isValid = false;
       }
       
-      if (node.data.type !== 'WebApp' && node.data.type !== 'TextNode') {
+      // Check nodes have incoming connections (except start, webapp, description box, and text nodes)
+      if (node.data.type !== 'StartNode' && 
+          node.data.type !== 'WebApp' && 
+          node.data.type !== 'TextNode' &&
+          node.data.type !== 'DescriptionBox') {
         const hasIncoming = edges.some(e => e.target === node.id);
         if (!hasIncoming) {
+          isValid = false;
+        }
+      }
+      
+      // End nodes should have incoming but no outgoing connections
+      if (node.data.type === 'EndNode') {
+        const hasIncoming = edges.some(e => e.target === node.id);
+        const hasOutgoing = edges.some(e => e.source === node.id);
+        
+        if (!hasIncoming || hasOutgoing) {
           isValid = false;
         }
       }
@@ -108,6 +154,27 @@ const WorkflowBuilder: React.FC = () => {
     
     setNodes(updatedNodes);
     
+    // Check overall workflow validity
+    let isWorkflowValid = hasOneStartNode && hasEndNode;
+    
+    if (!hasOneStartNode) {
+      toast({
+        title: "Workflow Validation",
+        description: "Workflow must have exactly one Start node.",
+        variant: "destructive"
+      });
+      isWorkflowValid = false;
+    }
+    
+    if (!hasEndNode) {
+      toast({
+        title: "Workflow Validation",
+        description: "Workflow must have at least one End node.",
+        variant: "destructive"
+      });
+      isWorkflowValid = false;
+    }
+    
     const invalidNodesCount = updatedNodes.filter(n => !n.data.isValid).length;
     if (invalidNodesCount > 0) {
       toast({
@@ -115,10 +182,10 @@ const WorkflowBuilder: React.FC = () => {
         description: `Found ${invalidNodesCount} issues in your workflow. Hover over nodes for details.`,
         variant: "destructive"
       });
-      return false;
+      isWorkflowValid = false;
     }
     
-    return true;
+    return isWorkflowValid;
   }, [nodes, edges, setNodes]);
   
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node<FlowNodeData>) => {
@@ -137,6 +204,17 @@ const WorkflowBuilder: React.FC = () => {
   }, []);
   
   const onConnect = useCallback((params: Connection) => {
+    // Check if trying to connect from an End node (which is not allowed)
+    const sourceNode = nodes.find(n => n.id === params.source);
+    if (sourceNode?.data.type === 'EndNode') {
+      toast({
+        title: "Connection not allowed",
+        description: "End nodes cannot have outgoing connections.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Simplified connection - no labels or extra properties, just animated edges
     const edgeId = `e${params.source}-${params.target}`;
     const newEdge = {
@@ -146,7 +224,7 @@ const WorkflowBuilder: React.FC = () => {
       style: { stroke: '#9b87f5', strokeWidth: 2 }
     };
     setEdges((eds) => addEdge(newEdge as Edge, eds));
-  }, [setEdges]);
+  }, [nodes, setEdges]);
   
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     setNodes((nds) =>
@@ -175,7 +253,6 @@ const WorkflowBuilder: React.FC = () => {
               ...edge.data,
               ...newData,
             },
-            label: newData.label || edge.label
           };
         }
         return edge;
@@ -193,6 +270,16 @@ const WorkflowBuilder: React.FC = () => {
   }, [setEdges]);
   
   const addNode = useCallback((type: ServiceType) => {
+    // Handle special node types
+    if (type === 'StartNode' && nodes.some(n => n.data.type === 'StartNode')) {
+      toast({
+        title: "Cannot add Start Node",
+        description: "Only one Start node is allowed in the workflow.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (type === 'WebApp' && nodes.some(n => n.data.type === 'WebApp')) {
       toast({
         title: "Cannot add WebApp",
@@ -211,12 +298,18 @@ const WorkflowBuilder: React.FC = () => {
 
     let nodeData: FlowNodeData = { 
       type, 
-      label: type, 
+      label: type === 'StartNode' ? 'Start' : 
+             type === 'EndNode' ? 'End' : 
+             type === 'DescriptionBox' ? 'Description' : type, 
       config: {} 
     };
     
     if (type === 'ConditionalLogic') {
       nodeData.logicType = 'Success';
+    }
+    
+    if (type === 'DescriptionBox') {
+      nodeData.description = 'Add your description here...';
     }
 
     const newNode: Node<FlowNodeData> = {
@@ -228,28 +321,51 @@ const WorkflowBuilder: React.FC = () => {
 
     setNodes((nds) => [...nds, newNode]);
     
-    if (type === 'ConditionalLogic') {
+    if (type === 'EndNode') {
+      toast({
+        title: "End Node Added",
+        description: "End nodes cannot have outgoing connections.",
+      });
+    } else if (type === 'ConditionalLogic') {
       toast({
         title: "Conditional Logic Added",
-        description: "Click on the node to configure the logic type using the dropdown menu.",
+        description: "Click on the node to configure the logic type.",
+      });
+    } else if (type === 'DescriptionBox') {
+      toast({
+        title: "Description Box Added",
+        description: "Click on the box to edit the description text.",
       });
     }
   }, [nodes, reactFlowInstance, setNodes]);
   
   const clearWorkflow = useCallback(() => {
-    const webAppNode = nodes.find(n => n.data.type === 'WebApp');
-    if (webAppNode) {
-      setNodes([webAppNode]);
+    // Keep only the Start node or create one if it doesn't exist
+    const startNode = nodes.find(n => n.data.type === 'StartNode');
+    
+    if (startNode) {
+      setNodes([startNode]);
     } else {
-      setNodes([]);
+      // Create a new Start node
+      setNodes([{
+        id: 'start-node',
+        type: 'serviceNode',
+        position: { x: 250, y: 50 },
+        data: { 
+          type: 'StartNode', 
+          label: 'Start', 
+          isEntry: true,
+        },
+      }]);
     }
+    
     setEdges([]);
     setSelectedNode(null);
     setSelectedEdge(null);
     
     toast({
       title: "Workflow Cleared",
-      description: "All nodes except WebApp have been removed.",
+      description: "All nodes except the Start node have been removed.",
     });
   }, [nodes, setNodes, setEdges]);
   
@@ -284,6 +400,24 @@ const WorkflowBuilder: React.FC = () => {
       const savedWorkflow = localStorage.getItem('workflow');
       if (savedWorkflow) {
         const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedWorkflow);
+        
+        // Verify if imported workflow has a Start node
+        const hasStartNode = savedNodes.some((node: any) => node.data.type === 'StartNode');
+        
+        if (!hasStartNode) {
+          // Add a Start node if missing
+          savedNodes.unshift({
+            id: 'start-node',
+            type: 'serviceNode',
+            position: { x: 250, y: 50 },
+            data: { 
+              type: 'StartNode', 
+              label: 'Start', 
+              isEntry: true,
+            },
+          });
+        }
+        
         setNodes(savedNodes);
         setEdges(savedEdges);
         toast({
@@ -318,8 +452,46 @@ const WorkflowBuilder: React.FC = () => {
       return;
     }
     
+    // Transform the nodes to proper JSON format for export
+    const processedNodes = nodes.map(node => {
+      // For description boxes, format specially
+      if (node.data.type === 'DescriptionBox') {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            type: 'note',
+            text: node.data.description || ''
+          }
+        };
+      }
+      
+      // For Start and End nodes, add special type tags
+      if (node.data.type === 'StartNode') {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            typeTag: 'start'
+          }
+        };
+      }
+      
+      if (node.data.type === 'EndNode') {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            typeTag: 'end'
+          }
+        };
+      }
+      
+      return node;
+    });
+    
     const workflow = {
-      nodes,
+      nodes: processedNodes,
       edges,
     };
     
@@ -342,12 +514,12 @@ const WorkflowBuilder: React.FC = () => {
   return (
     <div className={`h-screen ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 to-slate-800' : 'bg-gradient-to-br from-indigo-50 to-slate-100'}`} ref={reactFlowWrapper}>
       <ReactFlow
-        nodes={nodes as Node[]}
+        nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange as any}
+        onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeClick={onNodeClick as any}
+        onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
@@ -366,6 +538,9 @@ const WorkflowBuilder: React.FC = () => {
           className={`${theme === 'dark' ? 'bg-gray-800/70' : 'bg-white/70'} backdrop-blur-sm shadow-md rounded-lg border ${theme === 'dark' ? 'border-gray-700/50' : 'border-slate-200/50'}`}
           nodeColor={(node) => {
             switch (node.data?.type) {
+              case 'StartNode': return theme === 'dark' ? '#4ade80' : '#4ade80'; // green
+              case 'EndNode': return theme === 'dark' ? '#f87171' : '#f87171'; // red
+              case 'DescriptionBox': return theme === 'dark' ? '#93c5fd' : '#93c5fd'; // light blue
               case 'WebApp': return theme === 'dark' ? '#60a5fa' : '#60a5fa'; // blue
               case 'IDV': return theme === 'dark' ? '#4ade80' : '#4ade80'; // green
               case 'Media': return theme === 'dark' ? '#c084fc' : '#c084fc'; // purple

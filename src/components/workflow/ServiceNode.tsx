@@ -5,7 +5,8 @@ import {
   AppWindow, Shield, Camera, User, Briefcase, 
   FileText, Cake, Scan, ScanFace, 
   CheckSquare, XSquare, GitBranch,
-  CheckCircle, XCircle, HelpCircle, Settings
+  CheckCircle, XCircle, HelpCircle, Settings,
+  Play, Square, FileBox, Webhook
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +24,9 @@ export type ServiceType =
   | 'FaceCompare'
   | 'OBI'
   | 'TextNode'
+  | 'StartNode'
+  | 'EndNode'
+  | 'DescriptionBox'
   | 'ConditionalLogic'; 
 
 export type LogicType = 'Success' | 'Failed' | 'Conditional' | 'Indecisive' | 'Custom';
@@ -36,6 +40,7 @@ interface ServiceNodeProps {
     isValid?: boolean;
     isEntry?: boolean;
     logicType?: LogicType;
+    description?: string;
   };
   selected: boolean;
 }
@@ -52,6 +57,11 @@ const getServiceIcon = (type: ServiceType, logicType?: LogicType) => {
       default: return <GitBranch className="text-amber-400" />;
     }
   }
+
+  // Special node icons
+  if (type === 'StartNode') return <Play className="text-green-500" />;
+  if (type === 'EndNode') return <Square className="text-red-500" />;
+  if (type === 'DescriptionBox') return <FileBox className="text-blue-400" />;
 
   switch (type) {
     case 'WebApp': return <AppWindow className="text-blue-400" />;
@@ -87,6 +97,9 @@ const getLogicTypeClass = (logicType?: LogicType) => {
 
 const getNodeTypeBackground = (type: ServiceType) => {
   switch (type) {
+    case 'StartNode': return 'from-green-500/40 to-green-400/20';
+    case 'EndNode': return 'from-red-500/40 to-red-400/20';
+    case 'DescriptionBox': return 'from-blue-200/40 to-blue-100/20';
     case 'WebApp': return 'from-blue-500/20 to-blue-400/5';
     case 'IDV': return 'from-green-500/20 to-green-400/5';
     case 'Media': return 'from-purple-500/20 to-purple-400/5';
@@ -104,23 +117,62 @@ const getNodeTypeBackground = (type: ServiceType) => {
   }
 }
 
+const getBorderClass = (type: ServiceType) => {
+  switch (type) {
+    case 'StartNode': return 'border-green-500 border-[3px]';
+    case 'EndNode': return 'border-red-500 border-[3px]';
+    case 'DescriptionBox': return 'border-blue-300/50 border-dashed';
+    default: return 'border-gray-200';
+  }
+}
+
 const ServiceNode = memo(({ id, data, selected }: ServiceNodeProps) => {
-  const { type, label, isValid = true, isEntry = false, logicType } = data;
+  const { type, label, isValid = true, isEntry = false, logicType, description } = data;
+  
+  // Render special format for description boxes
+  if (type === 'DescriptionBox') {
+    return (
+      <div
+        className={cn(
+          'service-node relative flex flex-col p-3 rounded-xl border-2 max-w-[200px]',
+          getBorderClass(type),
+          selected && 'ring-2 ring-primary/70',
+          'bg-gradient-to-br',
+          getNodeTypeBackground(type),
+          'shadow-md hover:shadow-xl transition-all duration-200'
+        )}
+      >
+        <div className="service-node__icon p-2 rounded-full bg-white/80 shadow-sm">
+          {getServiceIcon(type)}
+        </div>
+        
+        <div className="text-center mt-2 mb-1 font-medium text-sm">
+          {label || 'Description'}
+        </div>
+        
+        <div className="text-xs text-gray-600 mt-1 p-2 bg-white/50 rounded-md">
+          {description || 'Add description text here...'}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div
       className={cn(
         'service-node relative flex flex-col items-center p-3 rounded-xl border-2',
         !isValid && 'border-red-500 bg-red-100/20',
-        isValid && !isEntry && type !== 'ConditionalLogic' && 'border-gray-200 bg-gradient-to-br',
+        isValid && !isEntry && type !== 'ConditionalLogic' && 
+          type !== 'StartNode' && type !== 'EndNode' && 'border-gray-200 bg-gradient-to-br',
         isEntry && 'border-blue-500/70 from-blue-500/30 to-blue-500/5 bg-gradient-to-br',
         type !== 'ConditionalLogic' && getNodeTypeBackground(type),
         selected && 'ring-2 ring-primary/70',
         type === 'ConditionalLogic' && getLogicTypeClass(logicType),
+        (type === 'StartNode' || type === 'EndNode') && getBorderClass(type),
         'shadow-md hover:shadow-xl transition-all duration-200'
       )}
     >
-      {!isEntry && (
+      {type !== 'StartNode' && (
         <Handle
           type="target"
           position={Position.Top}
@@ -131,7 +183,8 @@ const ServiceNode = memo(({ id, data, selected }: ServiceNodeProps) => {
       
       <div className={cn(
         "service-node__icon p-2.5 rounded-full",
-        type === 'ConditionalLogic' ? 'bg-gray-50/80' : 'bg-white shadow-sm'
+        (type === 'ConditionalLogic' || type === 'StartNode' || type === 'EndNode') 
+          ? 'bg-gray-50/80' : 'bg-white shadow-sm'
       )}>
         {getServiceIcon(type, logicType)}
       </div>
@@ -145,12 +198,14 @@ const ServiceNode = memo(({ id, data, selected }: ServiceNodeProps) => {
         )}
       </div>
       
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!bottom-0 w-3 h-3 bg-gray-300 hover:bg-primary"
-        id={`${id}-source`}
-      />
+      {type !== 'EndNode' && (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className="!bottom-0 w-3 h-3 bg-gray-300 hover:bg-primary"
+          id={`${id}-source`}
+        />
+      )}
     </div>
   );
 });

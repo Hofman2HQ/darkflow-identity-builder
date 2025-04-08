@@ -6,7 +6,8 @@ import {
   AppWindow, Shield, Camera, User, Briefcase, 
   FileText, Cake, Scan, ScanFace, 
   CheckSquare, FileUp, Download, Save, Trash2, GitBranch,
-  PlusCircle, Package, Sparkles, Workflow, Zap, Type
+  PlusCircle, Package, Sparkles, Workflow, Zap, Type,
+  Play, Square, FileBox
 } from 'lucide-react';
 import type { ServiceType } from './ServiceNode';
 import {
@@ -44,6 +45,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
   // Group services by category
   const serviceCategories = {
+    special: [
+      { type: 'StartNode', icon: <Play className="text-green-500" />, label: 'Start Node' },
+      { type: 'EndNode', icon: <Square className="text-red-500" />, label: 'End Node' },
+      { type: 'DescriptionBox', icon: <FileBox className="text-blue-400" />, label: 'Description Box' },
+    ],
     entry: [
       { type: 'WebApp', icon: <AppWindow className="text-blue-400" />, label: 'Web Application' }
     ],
@@ -74,8 +80,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
   const handleAddFreeText = () => {
     if (freeText.trim()) {
-      // Add a TextNode with the free text content
-      onAddNode('TextNode');
+      // Add a DescriptionBox node with the free text content
+      onAddNode('DescriptionBox');
       setFreeText('');
       setShowOptionsDropdown(false);
     }
@@ -117,6 +123,22 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className={`w-[220px] ${isDark ? 'bg-gray-800 border-gray-700 text-white' : ''}`}>
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-purple-500" />
+              Special Nodes
+            </DropdownMenuLabel>
+            {serviceCategories.special.map(service => (
+              <DropdownMenuItem 
+                key={service.type}
+                onClick={() => onAddNode(service.type as ServiceType)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                {service.icon}
+                {service.label}
+              </DropdownMenuItem>
+            ))}
+            
+            <DropdownMenuSeparator className={isDark ? 'bg-gray-700' : ''} />
             <DropdownMenuLabel className="flex items-center gap-2">
               <AppWindow className="h-4 w-4 text-blue-500" />
               Entry Points
@@ -228,7 +250,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 <Button 
                   variant="default" 
                   size="sm"
-                  onClick={() => onAddNode('TextNode')}
+                  onClick={handleAddFreeText}
                   className="mt-2"
                 >
                   Add to Canvas

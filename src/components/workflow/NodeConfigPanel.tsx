@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
+import { Node } from '@xyflow/react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { LogicType } from './ServiceNode';
 import {
   Select,
   SelectContent,
@@ -14,145 +16,97 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LogicType } from './ServiceNode';
-import type { Node } from '@xyflow/react';
-
-// Define the structure of the config object
-interface NodeConfig {
-  appId?: string;
-  flowName?: string;
-  idTypes?: string;
-  requireSelfie?: boolean;
-  debugMode?: boolean;
-  testFlags?: string;
-  extraNotes?: string;
-  timeout?: number;
-  [key: string]: any; // Allow for other properties
-}
-
-// FlowNodeData is the type for the data property of a Node
-interface FlowNodeData {
-  type: string;
-  label: string;
-  config?: NodeConfig;
-  isValid?: boolean;
-  isEntry?: boolean;
-  logicType?: LogicType;
-  [key: string]: any; // Add index signature for string keys
-}
+import { Theme } from './ThemeProvider';
 
 interface NodeConfigPanelProps {
-  node: Node<FlowNodeData> | null;
+  node: Node;
   onClose: () => void;
-  onUpdate: (nodeId: string, data: any) => void;
-  theme?: 'light' | 'dark';
+  onUpdate: (id: string, data: any) => void;
+  theme: Theme;
 }
 
-const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ 
-  node, 
-  onClose, 
-  onUpdate,
-  theme = 'light'
-}) => {
-  const [extraType, setExtraType] = useState<string>('none');
-  const [freeText, setFreeText] = useState<string>('');
-  const [textContent, setTextContent] = useState<string>('');
-
-  if (!node) {
-    return null;
-  }
+const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpdate, theme = 'light' }) => {
+  const { id, data } = node;
+  const [config, setConfig] = useState(data.config || {});
+  const [label, setLabel] = useState(data.label || '');
+  const [logicType, setLogicType] = useState<LogicType | undefined>(data.logicType);
+  const [description, setDescription] = useState(data.description || '');
 
   useEffect(() => {
-    if (node?.data?.config?.extraNotes) {
-      setFreeText(node.data.config.extraNotes as string);
-      setExtraType('freeText');
-    }
+    setConfig(data.config || {});
+    setLabel(data.label || '');
+    setLogicType(data.logicType);
+    setDescription(data.description || '');
+  }, [data]);
 
-    if (node?.data?.type === 'TextNode') {
-      setTextContent(node.data.textContent || 'Enter your text here');
-    }
-  }, [node]);
-
-  const handleChange = (key: string, value: any) => {
-    onUpdate(node.id, { [key]: value });
+  const handleSave = () => {
+    onUpdate(id, { 
+      label, 
+      config,
+      ...(data.type === 'ConditionalLogic' && { logicType }),
+      ...(data.type === 'DescriptionBox' && { description })
+    });
+    onClose();
   };
 
-  const handleConfigChange = (key: string, value: any) => {
-    const currentConfig = node.data.config || {};
-    const newConfig = { ...currentConfig, [key]: value };
-    onUpdate(node.id, { config: newConfig });
-  };
-
-  const handleExtraTypeChange = (value: string) => {
-    setExtraType(value);
-    
-    // If free text is selected, update the node with the current free text value
-    if (value === 'freeText') {
-      handleConfigChange('extraNotes', freeText);
-    }
-  };
-
-  const handleFreeTextChange = (text: string) => {
-    setFreeText(text);
-    handleConfigChange('extraNotes', text);
-  };
-
-  const handleTextContentChange = (text: string) => {
-    setTextContent(text);
-    handleChange('textContent', text);
-  };
-  
-  const isDark = theme === 'dark';
+  const isSpecialNode = data.type === 'StartNode' || data.type === 'EndNode';
 
   return (
-    <div className={`glass-morphism fixed right-4 bottom-4 w-[350px] rounded-lg p-4 animate-fade-in z-10 ${
-      isDark ? 'bg-gray-800/90 border-gray-700/50 text-white' : 'bg-white/90 border-slate-200/50'
-    }`}>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold">Node Configuration</h3>
-        <Button size="icon" variant="ghost" onClick={onClose} className="h-6 w-6">
+    <div 
+      className={`glass-morphism fixed bottom-4 left-4 rounded-xl p-5 w-[350px] z-20 
+        ${theme === 'dark' ? 'bg-gray-800/95 border-gray-700/50 text-white' : 'bg-background/95 border-slate-200/50'}`}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">Configure Node</h3>
+        <Button size="icon" variant="ghost" onClick={onClose} className="h-7 w-7">
           <X className="h-4 w-4" />
         </Button>
       </div>
       
-      <Separator className={`my-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />
-      
-      <div className="space-y-4 mt-4">
+      <div className="space-y-4">
         <div>
-          <Label htmlFor="label" className={isDark ? 'text-gray-200' : ''}>Node Label</Label>
-          <Input 
-            id="label" 
-            value={node.data.label || ''} 
-            onChange={(e) => handleChange('label', e.target.value)}
-            className={`mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-            placeholder="e.g., ID Verification, Face Match"
-          />
+          <Label htmlFor="node-type">Node Type</Label>
+          <div className="h-10 px-3 py-2 rounded-md border bg-muted/50 text-sm mt-1">
+            {data.type}
+          </div>
         </div>
         
-        {node.data.type === 'TextNode' && (
+        {!isSpecialNode && (
           <div>
-            <Label htmlFor="textContent" className={isDark ? 'text-gray-200' : ''}>Text Content</Label>
-            <Textarea 
-              id="textContent" 
-              value={textContent} 
-              onChange={(e) => handleTextContentChange(e.target.value)}
-              className={`min-h-[100px] mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-              placeholder="Enter your text here..."
+            <Label htmlFor="node-label">Display Label</Label>
+            <Input
+              id="node-label"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Node Label"
+              className={`mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : ''}`}
             />
           </div>
         )}
         
-        {node.data.type === 'ConditionalLogic' && (
+        {/* Special node panels */}
+        {data.type === 'DescriptionBox' && (
           <div>
-            <Label htmlFor="logicType" className={isDark ? 'text-gray-200' : ''}>Logic Type</Label>
-            <Select 
-              value={node.data.logicType || 'Success'} 
-              onValueChange={(value) => handleChange('logicType', value as LogicType)}
-            >
-              <SelectTrigger className={`mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}>
+            <Label htmlFor="description-text">Description Text</Label>
+            <Textarea
+              id="description-text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter description text..."
+              className={`min-h-[100px] mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : ''}`}
+            />
+          </div>
+        )}
+        
+        {/* Conditional Logic type selector */}
+        {data.type === 'ConditionalLogic' && (
+          <div>
+            <Label htmlFor="logic-type">Logic Type</Label>
+            <Select value={logicType} onValueChange={(value) => setLogicType(value as LogicType)}>
+              <SelectTrigger id="logic-type" className={`mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : ''}`}>
                 <SelectValue placeholder="Select logic type" />
               </SelectTrigger>
-              <SelectContent className={isDark ? 'bg-gray-800 border-gray-700 text-white' : ''}>
+              <SelectContent className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''}`}>
                 <SelectItem value="Success">Success</SelectItem>
                 <SelectItem value="Failed">Failed</SelectItem>
                 <SelectItem value="Conditional">Conditional</SelectItem>
@@ -163,124 +117,112 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
           </div>
         )}
         
-        {node.data.type === 'WebApp' && (
+        {/* Only show configuration panel for regular service nodes */}
+        {!isSpecialNode && data.type !== 'DescriptionBox' && data.type !== 'TextNode' && (
           <>
+            <Separator className={theme === 'dark' ? 'bg-gray-700' : ''} />
+            
             <div>
-              <Label htmlFor="appId" className={isDark ? 'text-gray-200' : ''}>Application ID</Label>
-              <Input 
-                id="appId" 
-                value={node.data.config?.appId || ''} 
-                onChange={(e) => handleConfigChange('appId', e.target.value)}
-                className={`mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-                placeholder="e.g., app-123456"
-              />
-            </div>
-            <div>
-              <Label htmlFor="flowName" className={isDark ? 'text-gray-200' : ''}>Flow Name</Label>
-              <Input 
-                id="flowName" 
-                value={node.data.config?.flowName || ''} 
-                onChange={(e) => handleConfigChange('flowName', e.target.value)}
-                className={`mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-                placeholder="e.g., ID Verification Flow"
-              />
+              <h4 className="text-sm font-medium mb-2">Configuration</h4>
+              
+              {/* Web App specific config */}
+              {data.type === 'WebApp' && (
+                <>
+                  <div className="mb-3">
+                    <Label htmlFor="app-id">App ID</Label>
+                    <Input
+                      id="app-id"
+                      value={config.appId || ''}
+                      onChange={(e) => setConfig({ ...config, appId: e.target.value })}
+                      placeholder="App ID"
+                      className={`mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : ''}`}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <Label htmlFor="flow-name">Flow Name</Label>
+                    <Input
+                      id="flow-name"
+                      value={config.flowName || ''}
+                      onChange={(e) => setConfig({ ...config, flowName: e.target.value })}
+                      placeholder="Flow Name"
+                      className={`mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : ''}`}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Switch
+                      id="debug-mode"
+                      checked={!!config.debugMode}
+                      onCheckedChange={(value) => setConfig({ ...config, debugMode: value })}
+                    />
+                    <Label htmlFor="debug-mode">Enable Debug Mode</Label>
+                  </div>
+                </>
+              )}
+              
+              {/* IDV specific config */}
+              {data.type === 'IDV' && (
+                <>
+                  <div className="mb-3">
+                    <Label htmlFor="id-types">ID Types (comma separated)</Label>
+                    <Input
+                      id="id-types"
+                      value={config.idTypes || ''}
+                      onChange={(e) => setConfig({ ...config, idTypes: e.target.value })}
+                      placeholder="passport,driving_license"
+                      className={`mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : ''}`}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Switch
+                      id="selfie"
+                      checked={!!config.requireSelfie}
+                      onCheckedChange={(value) => setConfig({ ...config, requireSelfie: value })}
+                    />
+                    <Label htmlFor="selfie">Require Selfie</Label>
+                  </div>
+                </>
+              )}
+              
+              {/* Generic config options for all service nodes */}
+              <div className="mb-3">
+                <Label htmlFor="extra-notes">Notes</Label>
+                <Textarea
+                  id="extra-notes"
+                  value={config.extraNotes || ''}
+                  onChange={(e) => setConfig({ ...config, extraNotes: e.target.value })}
+                  placeholder="Additional notes or context"
+                  className={`min-h-[60px] mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : ''}`}
+                />
+              </div>
+              <div className="mb-3">
+                <Label htmlFor="timeout">Timeout (seconds)</Label>
+                <Input
+                  id="timeout"
+                  type="number"
+                  value={config.timeout || ''}
+                  onChange={(e) => setConfig({ ...config, timeout: parseInt(e.target.value) || 0 })}
+                  placeholder="30"
+                  min="0"
+                  className={`mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : ''}`}
+                />
+              </div>
             </div>
           </>
         )}
-        
-        {node.data.type === 'IDV' && (
-          <>
-            <div>
-              <Label htmlFor="idTypes" className={isDark ? 'text-gray-200' : ''}>Supported ID Types</Label>
-              <Input 
-                id="idTypes" 
-                value={node.data.config?.idTypes || ''} 
-                onChange={(e) => handleConfigChange('idTypes', e.target.value)}
-                className={`mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-                placeholder="e.g., passport, driving_license"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="requireSelfie" className={isDark ? 'text-gray-200' : ''}>Require Selfie</Label>
-              <Switch 
-                id="requireSelfie" 
-                checked={!!node.data.config?.requireSelfie} 
-                onCheckedChange={(checked) => handleConfigChange('requireSelfie', checked)}
-                className={isDark ? 'data-[state=checked]:bg-indigo-400' : ''}
-              />
-            </div>
-          </>
+
+        {(isSpecialNode || data.type === 'StartNode') && (
+          <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+            This is a special node with limited configuration options.
+          </div>
         )}
         
-        <div>
-          <Label htmlFor="extraOptions" className={isDark ? 'text-gray-200' : ''}>Extras</Label>
-          <Select 
-            value={extraType} 
-            onValueChange={handleExtraTypeChange}
-          >
-            <SelectTrigger className={`mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}>
-              <SelectValue placeholder="Add extra options" />
-            </SelectTrigger>
-            <SelectContent className={isDark ? 'bg-gray-800 border-gray-700 text-white' : ''}>
-              <SelectItem value="none">None</SelectItem>
-              <SelectItem value="debug">Debug Mode</SelectItem>
-              <SelectItem value="testFlags">Test Flags</SelectItem>
-              <SelectItem value="freeText">Free Text Notes</SelectItem>
-              <SelectItem value="timer">Set Timer</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {extraType === 'debug' && (
-            <div className="mt-2 flex items-center justify-between">
-              <Label htmlFor="debugMode" className={isDark ? 'text-gray-200' : ''}>Enable Debug</Label>
-              <Switch 
-                id="debugMode" 
-                checked={!!node.data.config?.debugMode} 
-                onCheckedChange={(checked) => handleConfigChange('debugMode', checked)}
-                className={isDark ? 'data-[state=checked]:bg-indigo-400' : ''}
-              />
-            </div>
-          )}
-          
-          {extraType === 'testFlags' && (
-            <div className="mt-2">
-              <Label htmlFor="testFlags" className={isDark ? 'text-gray-200' : ''}>Test Flags</Label>
-              <Input 
-                id="testFlags" 
-                value={node.data.config?.testFlags || ''} 
-                onChange={(e) => handleConfigChange('testFlags', e.target.value)}
-                className={`mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-                placeholder="e.g., skip_validation=true"
-              />
-            </div>
-          )}
-          
-          {extraType === 'freeText' && (
-            <div className="mt-2">
-              <Label htmlFor="freeTextNotes" className={isDark ? 'text-gray-200' : ''}>Notes</Label>
-              <Textarea 
-                id="freeTextNotes" 
-                value={freeText} 
-                onChange={(e) => handleFreeTextChange(e.target.value)}
-                className={`min-h-[100px] mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-                placeholder="Add your notes, comments, or instructions here..."
-              />
-            </div>
-          )}
-          
-          {extraType === 'timer' && (
-            <div className="mt-2">
-              <Label htmlFor="timeout" className={isDark ? 'text-gray-200' : ''}>Timeout (seconds)</Label>
-              <Input 
-                id="timeout" 
-                type="number"
-                min={0}
-                value={node.data.config?.timeout || 30} 
-                onChange={(e) => handleConfigChange('timeout', parseInt(e.target.value))}
-                className={`mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-              />
-            </div>
-          )}
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave}>
+            Save Changes
+          </Button>
         </div>
       </div>
     </div>
