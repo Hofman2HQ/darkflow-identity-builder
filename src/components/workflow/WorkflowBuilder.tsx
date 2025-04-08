@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,
@@ -23,12 +22,43 @@ import NodeConfigPanel from './NodeConfigPanel';
 import ConnectionConfigPanel from './ConnectionConfigPanel';
 import { toast } from '@/hooks/use-toast';
 import { useTheme } from './ThemeProvider';
+import { Theme } from './ThemeProvider';
+
+interface NodeConfig {
+  appId?: string;
+  flowName?: string;
+  idTypes?: string;
+  requireSelfie?: boolean;
+  debugMode?: boolean;
+  testFlags?: string;
+  extraNotes?: string;
+  timeout?: number;
+  [key: string]: any;
+}
+
+interface NodeData extends Record<string, any> {
+  type: string;
+  label: string;
+  config?: NodeConfig;
+  isValid?: boolean;
+  isEntry?: boolean;
+  logicType?: LogicType;
+}
+
+interface ControlPanelProps {
+  onAddNode: (type: ServiceType) => void;
+  onClear: () => void;
+  onSave: () => void;
+  onImport: () => void;
+  onExport: () => void;
+  theme: Theme;
+}
 
 const nodeTypes = {
   serviceNode: ServiceNode,
 };
 
-const initialNodes: Node[] = [
+const initialNodes: Node<NodeData>[] = [
   {
     id: 'webapp-1',
     type: 'serviceNode',
@@ -45,9 +75,9 @@ const initialNodes: Node[] = [
 const initialEdges: Edge[] = [];
 
 const WorkflowBuilder: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
@@ -95,7 +125,7 @@ const WorkflowBuilder: React.FC = () => {
     return true;
   }, [nodes, edges, setNodes]);
   
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node<NodeData>) => {
     setSelectedNode(node);
     setSelectedEdge(null);
   }, []);
@@ -211,12 +241,7 @@ const WorkflowBuilder: React.FC = () => {
       y: Math.random() * 300 + 50,
     });
 
-    let nodeData: {
-      type: ServiceType;
-      label: string;
-      config: Record<string, any>;
-      logicType?: LogicType;
-    } = { 
+    let nodeData: NodeData = { 
       type, 
       label: type, 
       config: {} 
@@ -226,7 +251,7 @@ const WorkflowBuilder: React.FC = () => {
       nodeData.logicType = 'Success';
     }
 
-    const newNode: Node = {
+    const newNode: Node<NodeData> = {
       id: `${type.toLowerCase()}-${Date.now()}`,
       type: 'serviceNode',
       position,
@@ -241,7 +266,7 @@ const WorkflowBuilder: React.FC = () => {
         description: "Click on the node to configure the logic type using the dropdown menu.",
       });
     }
-  }, [nodes, reactFlowInstance, setNodes, toast]);
+  }, [nodes, reactFlowInstance, setNodes]);
   
   const clearWorkflow = useCallback(() => {
     const webAppNode = nodes.find(n => n.data.type === 'WebApp');

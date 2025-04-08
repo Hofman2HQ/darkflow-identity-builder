@@ -30,7 +30,8 @@ interface NodeConfig {
   [key: string]: any; // Allow for other properties
 }
 
-interface NodeData {
+// Updated to implement Record<string, unknown>
+interface NodeData extends Record<string, any> {
   type: string;
   label: string;
   config?: NodeConfig;
