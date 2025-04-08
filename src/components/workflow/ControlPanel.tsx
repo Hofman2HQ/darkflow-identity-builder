@@ -29,6 +29,7 @@ interface ControlPanelProps {
   onSave: () => void;
   onImport: () => void;
   onExport: () => void;
+  onOpenConditionPanel: () => void;
   theme: Theme;
 }
 
@@ -38,6 +39,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onSave,
   onImport,
   onExport,
+  onOpenConditionPanel,
   theme = 'light'
 }) => {
   const [showOptionsDropdown, setShowOptionsDropdown] = useState(false);
@@ -220,8 +222,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="outline" className={`w-full justify-start gap-2 border-dashed ${isDark ? 'text-gray-300 hover:text-primary hover:border-primary' : 'text-muted-foreground hover:text-primary hover:border-primary'}`}>
-          <Sparkles className="h-4 w-4" />
+        <Button 
+          variant="outline" 
+          className={`w-full justify-start gap-2 border-dashed ${isDark ? 'text-gray-300 hover:text-primary hover:border-primary' : 'text-muted-foreground hover:text-primary hover:border-primary'}`}
+          onClick={onOpenConditionPanel}
+        >
+          <GitBranch className="h-4 w-4 text-amber-400" />
           <span>Add Condition</span>
         </Button>
 

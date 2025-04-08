@@ -22,6 +22,7 @@ import ServiceNode, { ServiceType, LogicType } from './ServiceNode';
 import ControlPanel from './ControlPanel';
 import NodeConfigPanel from './NodeConfigPanel';
 import ConnectionConfigPanel from './ConnectionConfigPanel';
+import ConditionPanel from './ConditionPanel';
 import { toast } from '@/hooks/use-toast';
 import { useTheme } from './ThemeProvider';
 import { Theme } from './ThemeProvider';
@@ -45,6 +46,14 @@ interface NodeConfig {
   [key: string]: any;
 }
 
+// Condition interface
+interface Condition {
+  service: string;
+  component: string;
+  function: string;
+  value: string;
+}
+
 // NodeData type for the data property of Node
 interface FlowNodeData {
   type: string;
@@ -54,6 +63,8 @@ interface FlowNodeData {
   isEntry?: boolean;
   logicType?: LogicType;
   description?: string;
+  fontSize?: number;
+  conditions?: Condition[];
   [key: string]: any; // Add index signature for string keys
 }
 
@@ -100,6 +111,7 @@ const WorkflowBuilder: React.FC = () => {
   const [selectedNode, setSelectedNode] = useState<Node<FlowNodeData> | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const [configPanelOpen, setConfigPanelOpen] = useState<boolean>(false);
+  const [conditionPanelOpen, setConditionPanelOpen] = useState<boolean>(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const { theme, toggleTheme } = useTheme();
@@ -183,6 +195,14 @@ const WorkflowBuilder: React.FC = () => {
         }
       }
       
+      // Condition nodes should have at least one output connected
+      if (node.data.type === 'Condition') {
+        const hasOutgoing = edges.some(e => e.source === node.id);
+        if (!hasOutgoing) {
+          isValid = false;
+        }
+      }
+      
       return {
         ...node,
         data: {
@@ -262,14 +282,21 @@ const WorkflowBuilder: React.FC = () => {
       return;
     }
     
-    // Simplified connection - no labels or extra properties, just animated edges
-    const edgeId = `e${params.source}-${params.target}`;
+    // For condition nodes, add sourceHandle to identify which output is being connected
+    const edgeId = params.sourceHandle 
+      ? `e${params.source}-${params.sourceHandle}-${params.target}`
+      : `e${params.source}-${params.target}`;
+      
     const newEdge = {
       ...params,
       id: edgeId,
       animated: true,
-      style: { stroke: '#9b87f5', strokeWidth: 2 }
+      style: { stroke: '#9b87f5', strokeWidth: 2 },
+      // For condition nodes, add label based on the sourceHandle
+      ...(params.sourceHandle === 'match' && { label: 'Match' }),
+      ...(params.sourceHandle === 'notMatch' && { label: 'Not Match' })
     };
+    
     setEdges((eds) => addEdge(newEdge as Edge, eds));
   }, [nodes, setEdges]);
   
@@ -358,6 +385,7 @@ const WorkflowBuilder: React.FC = () => {
     
     if (type === 'DescriptionBox') {
       nodeData.description = 'Add your description here...';
+      nodeData.fontSize = 16; // Default font size
     }
 
     const newNode: Node<FlowNodeData> = {
@@ -386,6 +414,44 @@ const WorkflowBuilder: React.FC = () => {
       });
     }
   }, [nodes, reactFlowInstance, setNodes]);
+  
+  // Function to add condition node
+  const addConditionNode = useCallback((conditions: Condition[]) => {
+    if (!reactFlowInstance) return;
+    
+    // Determine a good position for the new node - center of the viewport
+    const position = reactFlowInstance.screenToFlowPosition({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    });
+
+    // Create a readable label from the conditions
+    const conditionLabel = conditions.length > 0 ? 
+      `${conditions[0].service} ${conditions[0].function} ${conditions[0].value}` : 
+      'Condition';
+    
+    const newNode: Node<FlowNodeData> = {
+      id: `condition-${Date.now()}`,
+      type: 'serviceNode',
+      position,
+      data: {
+        type: 'Condition',
+        label: conditionLabel,
+        conditions,
+        // Add appropriate handles for condition node
+        targetHandlePosition: 'left',
+        sourceHandlePosition: 'right'
+      },
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+    setConditionPanelOpen(false);
+    
+    toast({
+      title: "Condition Added",
+      description: "Connect the condition outputs to your workflow services.",
+    });
+  }, [reactFlowInstance, setNodes]);
   
   const clearWorkflow = useCallback(() => {
     // Keep only the Start node or create one if it doesn't exist
@@ -595,6 +661,7 @@ const WorkflowBuilder: React.FC = () => {
               case 'Media': return theme === 'dark' ? '#c084fc' : '#c084fc'; // purple
               case 'PII': return theme === 'dark' ? '#f472b6' : '#f472b6'; // pink
               case 'ConditionalLogic': return theme === 'dark' ? '#fbbf24' : '#fbbf24'; // amber
+              case 'Condition': return theme === 'dark' ? '#fbbf24' : '#fbbf24'; // amber
               case 'TextNode': return theme === 'dark' ? '#94a3b8' : '#94a3b8'; // slate for text nodes
               default: return theme === 'dark' ? '#94a3b8' : '#94a3b8'; // slate
             }
@@ -638,6 +705,7 @@ const WorkflowBuilder: React.FC = () => {
         onSave={saveWorkflow}
         onImport={importWorkflow}
         onExport={exportWorkflow}
+        onOpenConditionPanel={() => setConditionPanelOpen(true)}
         theme={theme}
       />
       
@@ -667,6 +735,14 @@ const WorkflowBuilder: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Condition panel */}
+      <ConditionPanel
+        open={conditionPanelOpen}
+        onClose={() => setConditionPanelOpen(false)}
+        onSubmit={addConditionNode}
+        theme={theme}
+      />
     </div>
   );
 };

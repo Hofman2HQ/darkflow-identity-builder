@@ -1,314 +1,217 @@
 
-import React, { memo, useState } from 'react';
+import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 
-export type LogicType = 'Success' | 'Failed' | 'Conditional' | 'Indecisive' | 'Custom';
-export type ServiceType = 'WebApp' | 'StartNode' | 'EndNode' | 'IDV' | 'Media' | 'PII' | 'Consent' | 'ConditionalLogic' | 'TextNode' | 'DescriptionBox';
+export type ServiceType = 'WebApp' | 'IDV' | 'Media' | 'PII' | 'POA' | 'AnyDoc' | 'AgeEstimation' | 'Liveness' | 
+  'FaceCompare' | 'OBI' | 'StartNode' | 'EndNode' | 'ConditionalLogic' | 'TextNode' | 'DescriptionBox' | 'AML' | 
+  'KYB' | 'Condition';
 
-const ServiceNode = memo(({ id, data, selected, isConnectable }: any) => {
-  const { type, label, isValid, logicType, description } = data;
-  const [fontSize, setFontSize] = useState<number>(14); // Default font size
-  
-  const getBorderColor = () => {
-    if (selected) return 'rgba(155, 135, 245, 0.9)'; // purple for selected
-    if (isValid === false) return 'rgba(239, 68, 68, 0.9)'; // red for invalid
-    if (type === 'EndNode') return 'rgba(248, 113, 113, 0.9)'; // light red for end node
-    if (type === 'StartNode') return 'rgba(74, 222, 128, 0.9)'; // green for start node
-    return 'rgba(203, 213, 225, 0.6)'; // default slate gray with transparency
+export type LogicType = 'Success' | 'Failure' | 'Timeout' | 'Custom';
+
+export interface ServiceNodeProps {
+  id: string;
+  data: {
+    type: ServiceType;
+    label: string;
+    config?: any;
+    isValid?: boolean;
+    isEntry?: boolean;
+    logicType?: LogicType;
+    description?: string;
+    fontSize?: number;
+    conditions?: Array<{
+      service: string;
+      component: string;
+      function: string;
+      value: string;
+    }>;
+    [key: string]: any;
   };
-  
-  const getBgGradient = () => {
-    if (type === 'DescriptionBox') return 'transparent'; // Transparent for description box
-    if (isValid === false) return 'linear-gradient(135deg, rgba(254, 226, 226, 0.6), rgba(254, 202, 202, 0.4))'; // light red for invalid
-    if (type === 'EndNode') return 'linear-gradient(135deg, rgba(254, 242, 242, 0.7), rgba(249, 168, 168, 0.4))'; // very light red for end
-    if (type === 'StartNode') return 'linear-gradient(135deg, rgba(240, 253, 244, 0.7), rgba(134, 239, 172, 0.4))'; // very light green for start
-    if (type === 'WebApp') return 'linear-gradient(135deg, rgba(239, 246, 255, 0.7), rgba(147, 197, 253, 0.4))'; // very light blue
-    if (type === 'IDV') return 'linear-gradient(135deg, rgba(240, 253, 244, 0.7), rgba(134, 239, 172, 0.4))'; // very light green
-    if (type === 'Media') return 'linear-gradient(135deg, rgba(250, 245, 255, 0.7), rgba(216, 180, 254, 0.4))'; // very light purple
-    if (type === 'PII') return 'linear-gradient(135deg, rgba(253, 242, 248, 0.7), rgba(249, 168, 212, 0.4))'; // very light pink
-    if (type === 'ConditionalLogic') return 'linear-gradient(135deg, rgba(255, 251, 235, 0.7), rgba(252, 211, 77, 0.4))'; // very light amber 
-    return 'linear-gradient(135deg, rgba(248, 250, 252, 0.7), rgba(226, 232, 240, 0.4))'; // default very light slate
-  };
-  
-  const getTextColor = () => {
-    if (type === 'EndNode') return '#ef4444'; // red for end node
-    if (type === 'StartNode') return '#22c55e'; // green for start
-    if (type === 'WebApp') return '#3b82f6'; // blue for webapp
-    if (type === 'ConditionalLogic') return '#f59e0b'; // amber for conditional logic
-    if (type === 'IDV') return '#10b981'; // emerald for IDV
-    if (type === 'Media') return '#8b5cf6'; // purple for media
-    if (type === 'PII') return '#ec4899'; // pink for PII
-    return '#64748b'; // slate for default
-  };
-  
-  const getIconColor = () => {
-    if (isValid === false) return '#ef4444'; // red for invalid
-    return getTextColor();
-  };
-  
-  const getIconType = () => {
-    if (type === 'StartNode') return '➡️';
-    if (type === 'EndNode') return '🛑';
-    if (type === 'WebApp') return '🖥️';
-    if (type === 'IDV') return '🪪';
-    if (type === 'Media') return '📸';
-    if (type === 'PII') return '👤';
-    if (type === 'Consent') return '✓';
-    if (type === 'ConditionalLogic') return '🔀';
-    if (type === 'TextNode') return '📝';
-    if (type === 'DescriptionBox') return '📋';
-    return '📦';
-  };
-  
-  const increaseTextSize = () => {
-    setFontSize(prev => Math.min(prev + 2, 24)); // Max size 24px
-  };
-  
-  const decreaseTextSize = () => {
-    setFontSize(prev => Math.max(prev - 2, 10)); // Min size 10px
-  };
-  
-  // Special rendering for the description box
+  selected: boolean;
+}
+
+const ServiceNode: React.FC<ServiceNodeProps> = memo(({ id, data, selected }) => {
+  const { 
+    type, 
+    label, 
+    isValid = true, 
+    isEntry = false, 
+    logicType = 'Success', 
+    description, 
+    fontSize = 16,
+    conditions = []
+  } = data;
+
+  // Special case for description box - make transparent
   if (type === 'DescriptionBox') {
     return (
-      <div style={{ 
-        background: 'transparent',
-        border: selected ? `1px dashed ${getBorderColor()}` : 'none',
-        boxShadow: selected ? '0 0 15px rgba(155, 135, 245, 0.3)' : 'none',
-        padding: '5px',
-        position: 'relative',
-        minWidth: '150px',
-        maxWidth: '300px',
-      }}>
-        <div style={{ 
-          color: selected ? '#f8fafc' : '#e2e8f0', 
-          fontSize: `${fontSize}px`,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          lineHeight: '1.4',
-          whiteSpace: 'pre-wrap',
-          cursor: 'default',
-          padding: '4px',
-          textAlign: 'left',
-          textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-        }}>
-          {description || 'Description text...'}
-        </div>
-        
-        {selected && (
-          <div style={{
-            position: 'absolute',
-            right: '0px',
-            top: '0px',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'rgba(30, 41, 59, 0.7)',
-            borderRadius: '4px',
-            padding: '2px',
-          }}>
-            <button 
-              onClick={increaseTextSize} 
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px' }}
-              title="Increase font size"
-            >
-              <ChevronUp size={14} color="#e2e8f0" />
-            </button>
-            <button 
-              onClick={decreaseTextSize} 
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px' }}
-              title="Decrease font size"
-            >
-              <ChevronDown size={14} color="#e2e8f0" />
-            </button>
+      <>
+        <div
+          className="service-node bg-transparent border-0 shadow-none text-left"
+          data-type={type}
+          data-valid={isValid}
+        >
+          <div 
+            className="service-node__description"
+            style={{ 
+              fontSize: `${fontSize}px`,
+              color: selected ? '#9b87f5' : '#fff',
+              textShadow: '0 0 4px rgba(0,0,0,0.5)'
+            }}
+          >
+            {description}
           </div>
-        )}
-        
+        </div>
         <Handle
           type="target"
           position={Position.Left}
           style={{ visibility: 'hidden' }}
-          isConnectable={isConnectable}
+          isConnectable={true}
         />
-        <Handle
-          type="source"
-          position={Position.Right}
-          style={{ visibility: 'hidden' }}
-          isConnectable={isConnectable}
-        />
-      </div>
+      </>
     );
   }
   
-  // Special rendering for text nodes
-  if (type === 'TextNode') {
+  // Special case for Condition node
+  if (type === 'Condition') {
+    // Create a summary of conditions
+    const conditionSummary = conditions.map((condition, index) => (
+      <div key={index} className="text-xs text-center mt-1 font-medium">
+        {`${condition.service} ${condition.function} ${condition.value}`}
+      </div>
+    ));
+    
     return (
-      <div style={{ 
-        background: 'transparent',
-        border: selected ? `1px dashed ${getBorderColor()}` : 'none',
-        borderRadius: '4px',
-        padding: '5px',
-        boxShadow: selected ? '0 0 15px rgba(155, 135, 245, 0.3)' : 'none',
-      }}>
-        <div style={{ 
-          color: '#e2e8f0', 
-          fontSize: `${fontSize}px`,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          whiteSpace: 'pre-wrap',
-          textAlign: 'left',
-          maxWidth: '200px',
-          textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-        }}>
-          {label || 'Text node...'}
-        </div>
-        
-        {selected && (
-          <div style={{
-            position: 'absolute',
-            right: '2px',
-            top: '0px',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'rgba(30, 41, 59, 0.7)',
-            borderRadius: '4px',
-            padding: '2px',
-          }}>
-            <button 
-              onClick={increaseTextSize} 
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px' }}
-              title="Increase font size"
-            >
-              <ChevronUp size={14} color="#e2e8f0" />
-            </button>
-            <button 
-              onClick={decreaseTextSize} 
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px' }}
-              title="Decrease font size"
-            >
-              <ChevronDown size={14} color="#e2e8f0" />
-            </button>
+      <>
+        <Handle 
+          type="target" 
+          position={Position.Left} 
+          id="target" 
+          className={`w-2 h-2 ${selected ? 'bg-primary' : ''}`}
+          isConnectable={true}
+        />
+        <div 
+          className={`service-node ${!isValid ? 'invalid' : ''} transition-all duration-300 ${selected ? 'scale-110' : ''}`}
+          data-type={type}
+          data-valid={isValid}
+        >
+          <div className="service-node__icon bg-amber-500/40 p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 3h5v5"></path>
+              <path d="M8 3H3v5"></path>
+              <path d="M21 16v5h-5"></path>
+              <path d="M16 16L8 8"></path>
+              <path d="M3 16v5h5"></path>
+            </svg>
           </div>
-        )}
+          <div className="service-node__title text-sm font-medium">
+            {label}
+          </div>
+          <div className="service-node__conditions text-xs opacity-70">
+            {conditionSummary}
+          </div>
+        </div>
+        <Handle 
+          type="source" 
+          position={Position.Right} 
+          id="match" 
+          style={{ top: '35%' }} 
+          className={`w-2 h-2 ${selected ? 'bg-green-500' : ''}`}
+          isConnectable={true}
+        />
+        <Handle 
+          type="source" 
+          position={Position.Right} 
+          id="notMatch" 
+          style={{ top: '70%' }} 
+          className={`w-2 h-2 ${selected ? 'bg-red-500' : ''}`}
+          isConnectable={true}
+        />
         
-        <Handle
-          type="target"
-          position={Position.Left}
-          style={{ visibility: 'hidden' }}
-          isConnectable={isConnectable}
-        />
-        <Handle
-          type="source"
-          position={Position.Right}
-          style={{ visibility: 'hidden' }}
-          isConnectable={isConnectable}
-        />
-      </div>
+        {/* Labels for the handles */}
+        <div 
+          style={{ 
+            position: 'absolute', 
+            right: '-50px', 
+            top: '35%', 
+            transform: 'translateY(-50%)',
+            fontSize: '10px',
+            color: selected ? '#4ade80' : '#6b7280'
+          }}
+        >
+          Match
+        </div>
+        <div 
+          style={{ 
+            position: 'absolute', 
+            right: '-65px', 
+            top: '70%', 
+            transform: 'translateY(-50%)',
+            fontSize: '10px',
+            color: selected ? '#f87171' : '#6b7280'
+          }}
+        >
+          Not Match
+        </div>
+      </>
     );
   }
+
+  // Base style classes for the node
+  let baseNodeClasses = `service-node neo-blur ${!isValid ? 'invalid' : ''} transition-all duration-300 ${selected ? 'scale-105' : ''}`;
   
-  // Logic for conditional logic node display
-  const getConditionalBadge = () => {
-    if (type !== 'ConditionalLogic') return null;
-    
-    const getBadgeColor = () => {
-      switch(logicType) {
-        case 'Success': return 'bg-green-100 text-green-800';
-        case 'Failed': return 'bg-red-100 text-red-800';
-        case 'Conditional': return 'bg-amber-100 text-amber-800';
-        case 'Indecisive': return 'bg-gray-100 text-gray-800';
-        case 'Custom': return 'bg-purple-100 text-purple-800';
-        default: return 'bg-blue-100 text-blue-800';
-      }
-    };
-    
-    return (
-      <div className={`text-xs px-2 py-0.5 rounded-full ${getBadgeColor()} mt-1`}>
-        {logicType || 'Logic Type'}
-      </div>
-    );
+  // Additional style based on node type
+  const nodeTypeClass = {
+    StartNode: 'from-green-500/20 to-green-700/20 border-green-500/30',
+    EndNode: 'from-red-500/20 to-red-700/20 border-red-500/30',
+    WebApp: 'from-blue-500/20 to-blue-700/20 border-blue-500/30',
+    IDV: 'from-green-500/20 to-green-700/20 border-green-500/30',
+    Media: 'from-purple-500/20 to-purple-700/20 border-purple-500/30',
+    PII: 'from-pink-500/20 to-pink-700/20 border-pink-500/30',
+    ConditionalLogic: 'from-amber-500/20 to-amber-700/20 border-amber-500/30',
+    AML: 'from-red-500/20 to-red-700/20 border-red-500/30',
+    KYB: 'from-orange-500/20 to-orange-700/20 border-orange-500/30',
+    Condition: 'from-yellow-500/20 to-yellow-700/20 border-yellow-500/30',
+    TextNode: 'from-gray-500/20 to-gray-700/20 border-gray-500/30',
   };
   
+  const nodeClass = `${baseNodeClasses} bg-gradient-to-br ${nodeTypeClass[type] || 'from-gray-500/20 to-gray-700/20 border-gray-500/30'}`;
+  
   return (
-    <div
-      className="service-node"
-      style={{
-        borderWidth: type === 'StartNode' || type === 'EndNode' ? '2px' : '1px',
-        borderStyle: 'solid',
-        borderColor: getBorderColor(),
-        background: getBgGradient(),
-        opacity: isValid === false ? 0.8 : 1,
-        borderRadius: '12px',
-        padding: '10px 14px',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        boxShadow: selected 
-          ? `0 0 0 1px ${getBorderColor()}, 0 0 20px rgba(155, 135, 245, 0.4)` 
-          : '0 4px 10px rgba(0, 0, 0, 0.15)',
-        minWidth: '130px',
-        maxWidth: '200px',
-        textAlign: 'center',
-        fontSize: '14px',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        transition: 'box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out',
-        transform: selected ? 'translateY(-2px)' : 'none',
-      }}
-    >
-      {isValid === false && (
-        <div className="absolute -top-2 -right-2">
-          <AlertTriangle className="h-5 w-5 fill-red-100 text-red-600" />
-        </div>
+    <>
+      {!isEntry && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          className={`w-2 h-2 ${selected ? 'bg-primary' : ''}`}
+          isConnectable={true}
+        />
       )}
-      
-      <div className="service-node__icon" 
-        style={{ 
-          color: getIconColor(), 
-          fontSize: '20px', 
-          marginBottom: '4px',
-          textShadow: '0 0 10px rgba(255,255,255,0.3)'
-        }}>
-        {getIconType()}
+      <div 
+        className={nodeClass}
+        data-type={type}
+        data-valid={isValid}
+      >
+        <div className={`service-node__icon ${selected ? 'animate-pulse' : ''}`}>
+          {type === 'ConditionalLogic' && (
+            <div className="text-xs py-1 px-2 rounded-full bg-amber-500/40 text-white">
+              {logicType}
+            </div>
+          )}
+        </div>
+        <div className="service-node__title text-base font-medium">
+          {label}
+        </div>
       </div>
-      
-      <div className="service-node__title" 
-        style={{ 
-          color: getTextColor(), 
-          fontWeight: '500', 
-          marginBottom: type === 'ConditionalLogic' ? '2px' : '0px',
-          textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-        }}>
-        {label || type}
-      </div>
-      
-      {getConditionalBadge()}
-      
-      {/* Only show handles for connectable nodes */}
       {type !== 'EndNode' && (
         <Handle
           type="source"
           position={Position.Right}
-          style={{ 
-            background: getBorderColor(),
-            boxShadow: '0 0 5px rgba(155, 135, 245, 0.5)'
-          }}
-          isConnectable={isConnectable}
+          className={`w-2 h-2 ${selected ? 'bg-primary' : ''}`}
+          isConnectable={true}
         />
       )}
-      
-      {type !== 'StartNode' && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          style={{ 
-            background: getBorderColor(),
-            boxShadow: '0 0 5px rgba(155, 135, 245, 0.5)'
-          }}
-          isConnectable={isConnectable}
-        />
-      )}
-    </div>
+    </>
   );
 });
 
