@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -105,6 +105,17 @@ const ConnectionConfigPanel: React.FC<ConnectionConfigPanelProps> = ({
             />
           </div>
         )}
+        
+        <div>
+          <Label htmlFor="camundaCondition" className={isDark ? 'text-gray-200' : ''}>Camunda Condition (Optional)</Label>
+          <Input 
+            id="camundaCondition" 
+            value={config.camundaCondition || ''} 
+            onChange={(e) => handleChange('camundaCondition', e.target.value)}
+            className={`mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
+            placeholder="e.g., ${result.success == true}"
+          />
+        </div>
         
         <div className="flex justify-end pt-2">
           <Button 

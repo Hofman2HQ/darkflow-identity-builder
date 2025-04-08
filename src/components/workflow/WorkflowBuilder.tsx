@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,
@@ -16,13 +15,14 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, FileJson } from 'lucide-react';
 
 import ServiceNode, { ServiceType, LogicType } from './ServiceNode';
 import ControlPanel from './ControlPanel';
 import NodeConfigPanel from './NodeConfigPanel';
 import ConnectionConfigPanel from './ConnectionConfigPanel';
 import ConditionPanel from './ConditionPanel';
+import CamundaExportDialog from './CamundaExportDialog';
 import { toast } from '@/hooks/use-toast';
 import { useTheme } from './ThemeProvider';
 import { Theme } from './ThemeProvider';
@@ -112,15 +112,14 @@ const WorkflowBuilder: React.FC = () => {
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const [configPanelOpen, setConfigPanelOpen] = useState<boolean>(false);
   const [conditionPanelOpen, setConditionPanelOpen] = useState<boolean>(false);
+  const [camundaExportOpen, setCamundaExportOpen] = useState<boolean>(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const { theme, toggleTheme } = useTheme();
   
-  // Keyboard event handler for deleting selected nodes
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNode) {
-        // Don't allow deleting the Start node
         if (selectedNode.data.type === 'StartNode') {
           toast({
             title: "Cannot Delete Start Node",
@@ -130,7 +129,6 @@ const WorkflowBuilder: React.FC = () => {
           return;
         }
         
-        // Delete the node and its connected edges
         setNodes(nodes.filter(n => n.id !== selectedNode.id));
         setEdges(edges.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
         setSelectedNode(null);
@@ -149,32 +147,26 @@ const WorkflowBuilder: React.FC = () => {
   }, [selectedNode, nodes, edges, setNodes, setEdges]);
   
   const validateWorkflow = useCallback(() => {
-    // Check for start node
     const startNodes = nodes.filter(n => n.data.type === 'StartNode');
     const hasOneStartNode = startNodes.length === 1;
     
-    // Check for end nodes
     const endNodes = nodes.filter(n => n.data.type === 'EndNode');
     const hasEndNode = endNodes.length >= 1;
     
-    // Check for WebApp node
     const webAppNodes = nodes.filter(n => n.data.type === 'WebApp');
     const hasOneWebApp = webAppNodes.length === 1;
     
     const updatedNodes = nodes.map(node => {
       let isValid = true;
       
-      // Start node validation
       if (node.data.type === 'StartNode' && !hasOneStartNode) {
         isValid = false;
       }
       
-      // WebApp validation
       if (node.data.type === 'WebApp' && !hasOneWebApp) {
         isValid = false;
       }
       
-      // Check nodes have incoming connections (except start, webapp, description box, and text nodes)
       if (node.data.type !== 'StartNode' && 
           node.data.type !== 'WebApp' && 
           node.data.type !== 'TextNode' &&
@@ -185,7 +177,6 @@ const WorkflowBuilder: React.FC = () => {
         }
       }
       
-      // End nodes should have incoming but no outgoing connections
       if (node.data.type === 'EndNode') {
         const hasIncoming = edges.some(e => e.target === node.id);
         const hasOutgoing = edges.some(e => e.source === node.id);
@@ -195,7 +186,6 @@ const WorkflowBuilder: React.FC = () => {
         }
       }
       
-      // Condition nodes should have at least one output connected
       if (node.data.type === 'Condition') {
         const hasOutgoing = edges.some(e => e.source === node.id);
         if (!hasOutgoing) {
@@ -214,7 +204,6 @@ const WorkflowBuilder: React.FC = () => {
     
     setNodes(updatedNodes);
     
-    // Check overall workflow validity
     let isWorkflowValid = hasOneStartNode && hasEndNode;
     
     if (!hasOneStartNode) {
@@ -253,7 +242,6 @@ const WorkflowBuilder: React.FC = () => {
     setSelectedEdge(null);
   }, []);
   
-  // Node double-click handler to open the config panel
   const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node<FlowNodeData>) => {
     setSelectedNode(node);
     setSelectedEdge(null);
@@ -271,7 +259,6 @@ const WorkflowBuilder: React.FC = () => {
   }, []);
   
   const onConnect = useCallback((params: Connection) => {
-    // Check if trying to connect from an End node (which is not allowed)
     const sourceNode = nodes.find(n => n.id === params.source);
     if (sourceNode?.data.type === 'EndNode') {
       toast({
@@ -282,7 +269,6 @@ const WorkflowBuilder: React.FC = () => {
       return;
     }
     
-    // For condition nodes, add sourceHandle to identify which output is being connected
     const edgeId = params.sourceHandle 
       ? `e${params.source}-${params.sourceHandle}-${params.target}`
       : `e${params.source}-${params.target}`;
@@ -292,7 +278,6 @@ const WorkflowBuilder: React.FC = () => {
       id: edgeId,
       animated: true,
       style: { stroke: '#9b87f5', strokeWidth: 2 },
-      // For condition nodes, add label based on the sourceHandle
       ...(params.sourceHandle === 'match' && { label: 'Match' }),
       ...(params.sourceHandle === 'notMatch' && { label: 'Not Match' })
     };
@@ -345,7 +330,6 @@ const WorkflowBuilder: React.FC = () => {
   }, [setEdges]);
   
   const addNode = useCallback((type: ServiceType) => {
-    // Handle special node types
     if (type === 'StartNode' && nodes.some(n => n.data.type === 'StartNode')) {
       toast({
         title: "Cannot add Start Node",
@@ -415,17 +399,14 @@ const WorkflowBuilder: React.FC = () => {
     }
   }, [nodes, reactFlowInstance, setNodes]);
   
-  // Function to add condition node
   const addConditionNode = useCallback((conditions: Condition[]) => {
     if (!reactFlowInstance) return;
     
-    // Determine a good position for the new node - center of the viewport
     const position = reactFlowInstance.screenToFlowPosition({
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
     });
 
-    // Create a readable label from the conditions
     const conditionLabel = conditions.length > 0 ? 
       `${conditions[0].service} ${conditions[0].function} ${conditions[0].value}` : 
       'Condition';
@@ -438,7 +419,6 @@ const WorkflowBuilder: React.FC = () => {
         type: 'Condition',
         label: conditionLabel,
         conditions,
-        // Add appropriate handles for condition node
         targetHandlePosition: 'left',
         sourceHandlePosition: 'right'
       },
@@ -454,13 +434,11 @@ const WorkflowBuilder: React.FC = () => {
   }, [reactFlowInstance, setNodes]);
   
   const clearWorkflow = useCallback(() => {
-    // Keep only the Start node or create one if it doesn't exist
     const startNode = nodes.find(n => n.data.type === 'StartNode');
     
     if (startNode) {
       setNodes([startNode]);
     } else {
-      // Create a new Start node
       setNodes([{
         id: 'start-node',
         type: 'serviceNode',
@@ -515,11 +493,9 @@ const WorkflowBuilder: React.FC = () => {
       if (savedWorkflow) {
         const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedWorkflow);
         
-        // Verify if imported workflow has a Start node
         const hasStartNode = savedNodes.some((node: any) => node.data.type === 'StartNode');
         
         if (!hasStartNode) {
-          // Add a Start node if missing
           savedNodes.unshift({
             id: 'start-node',
             type: 'serviceNode',
@@ -566,9 +542,7 @@ const WorkflowBuilder: React.FC = () => {
       return;
     }
     
-    // Transform the nodes to proper JSON format for export
     const processedNodes = nodes.map(node => {
-      // For description boxes, format specially
       if (node.data.type === 'DescriptionBox') {
         return {
           ...node,
@@ -580,7 +554,6 @@ const WorkflowBuilder: React.FC = () => {
         };
       }
       
-      // For Start and End nodes, add special type tags
       if (node.data.type === 'StartNode') {
         return {
           ...node,
@@ -624,6 +597,10 @@ const WorkflowBuilder: React.FC = () => {
       description: "Your workflow has been exported as JSON.",
     });
   }, [nodes, edges, validateWorkflow]);
+  
+  const exportToCamunda = useCallback(() => {
+    setCamundaExportOpen(true);
+  }, []);
   
   return (
     <div className={`h-screen ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 to-slate-800' : 'bg-gradient-to-br from-indigo-50 to-slate-100'}`} ref={reactFlowWrapper}>
@@ -674,7 +651,7 @@ const WorkflowBuilder: React.FC = () => {
           className={theme === 'dark' ? 'bg-gray-900/30' : 'bg-white/30'} 
         />
         
-        <Panel position="bottom-center" className="p-2">
+        <Panel position="bottom-center" className="p-2 flex gap-2">
           <Button 
             variant="default" 
             onClick={validateWorkflow}
@@ -684,6 +661,18 @@ const WorkflowBuilder: React.FC = () => {
               shadow-md px-6`}
           >
             Validate Workflow
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={exportToCamunda}
+            className={`flex items-center gap-2 ${theme === 'dark' 
+              ? 'bg-gray-800/70 border-gray-700/50 hover:bg-gray-700/70 text-white' 
+              : 'bg-white/70 border-slate-200/50 hover:bg-slate-100/70'} 
+              shadow-md px-6 backdrop-blur-sm`}
+          >
+            <FileJson size={16} />
+            Export to Camunda
           </Button>
         </Panel>
         
@@ -719,7 +708,6 @@ const WorkflowBuilder: React.FC = () => {
         />
       )}
       
-      {/* Dialog for node configuration */}
       <Dialog open={configPanelOpen} onOpenChange={setConfigPanelOpen}>
         <DialogContent className={`${theme === 'dark' ? 'bg-gray-800 text-white border-gray-700' : ''} max-w-md`}>
           <DialogHeader>
@@ -736,11 +724,18 @@ const WorkflowBuilder: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Condition panel */}
       <ConditionPanel
         open={conditionPanelOpen}
         onClose={() => setConditionPanelOpen(false)}
         onSubmit={addConditionNode}
+        theme={theme}
+      />
+      
+      <CamundaExportDialog
+        open={camundaExportOpen}
+        onClose={() => setCamundaExportOpen(false)}
+        nodes={nodes}
+        edges={edges}
         theme={theme}
       />
     </div>
