@@ -4,7 +4,7 @@ import { Handle, Position } from '@xyflow/react';
 import { 
   AppWindow, Shield, Camera, User, Briefcase, 
   FileText, Cake, Scan, ScanFace, 
-  CheckSquare, XSquare
+  CheckSquare, XSquare, GitBranch
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +21,10 @@ export type ServiceType =
   | 'Liveness'
   | 'FaceCompare'
   | 'OBI'
-  | 'TextNode';
+  | 'TextNode'
+  | 'ConditionalLogic'; // Added new type for conditional logic
+
+export type LogicType = 'Success' | 'Failed' | 'Conditional' | 'Indecisive';
 
 interface ServiceNodeProps {
   id: string;
@@ -31,6 +34,7 @@ interface ServiceNodeProps {
     config?: Record<string, any>;
     isValid?: boolean;
     isEntry?: boolean;
+    logicType?: LogicType;
   };
   selected: boolean;
 }
@@ -47,9 +51,10 @@ const getServiceIcon = (type: ServiceType) => {
     case 'AnyDoc': return <FileText className="text-blue-400" />;
     case 'AgeEstimation': return <Cake className="text-teal-400" />;
     case 'Liveness': return <Scan className="text-indigo-400" />;
-    case 'FaceCompare': return <ScanFace className="text-cyan-400" />; // Changed from FaceId to ScanFace
+    case 'FaceCompare': return <ScanFace className="text-cyan-400" />; 
     case 'OBI': return <CheckSquare className="text-emerald-400" />;
     case 'TextNode': return <FileText className="text-gray-400" />;
+    case 'ConditionalLogic': return <GitBranch className="text-amber-400" />;
     default: return <XSquare className="text-gray-400" />;
   }
 }
@@ -63,7 +68,8 @@ const ServiceNode = memo(({ id, data, selected }: ServiceNodeProps) => {
         'service-node',
         !isValid && 'invalid',
         isValid && !isEntry && 'valid',
-        selected && 'ring-2 ring-primary/50'
+        selected && 'ring-2 ring-primary/50',
+        type === 'ConditionalLogic' && 'border-amber-500/40'
       )}
     >
       {!isEntry && (
@@ -79,7 +85,14 @@ const ServiceNode = memo(({ id, data, selected }: ServiceNodeProps) => {
         {getServiceIcon(type)}
       </div>
       
-      <div className="service-node__title">{label}</div>
+      <div className="service-node__title">
+        {label}
+        {type === 'ConditionalLogic' && data.logicType && (
+          <div className="text-xs opacity-70 mt-1">
+            {data.logicType}
+          </div>
+        )}
+      </div>
       
       <Handle
         type="source"

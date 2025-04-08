@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { 
   AppWindow, Shield, Camera, User, Briefcase, 
   FileText, Cake, Scan, ScanFace, 
-  CheckSquare, FileUp, Download, Save, Trash2
+  CheckSquare, FileUp, Download, Save, Trash2, GitBranch
 } from 'lucide-react';
 import type { ServiceType } from './ServiceNode';
 
@@ -62,7 +63,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       
       <Separator />
       
-      <div>
+      <div className="space-y-2">
+        <ServiceButton 
+          icon={<GitBranch />} 
+          label="Conditional Logic" 
+          onClick={() => onAddNode('ConditionalLogic')} 
+          fullWidth 
+        />
         <ServiceButton 
           icon={<FileText />} 
           label="Text Note" 

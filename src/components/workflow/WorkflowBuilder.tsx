@@ -169,11 +169,20 @@ const WorkflowBuilder: React.FC = () => {
       y: Math.random() * 300 + 50,
     });
 
+    let nodeData = { type, label: type, config: {} };
+    
+    if (type === 'ConditionalLogic') {
+      nodeData = {
+        ...nodeData,
+        logicType: 'Success'
+      };
+    }
+
     const newNode: Node = {
       id: `${type.toLowerCase()}-${Date.now()}`,
       type: 'serviceNode',
       position,
-      data: { type, label: type, config: {} },
+      data: nodeData,
     };
 
     setNodes((nds) => [...nds, newNode]);

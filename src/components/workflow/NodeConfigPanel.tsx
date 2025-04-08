@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import type { Node } from '@xyflow/react';
-import type { ServiceType } from './ServiceNode';
+import type { ServiceType, LogicType } from './ServiceNode';
 
 interface NodeConfigPanelProps {
   node: Node | null;
@@ -36,6 +37,10 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
     onUpdate(node.id, { config: newConfig });
+  };
+
+  const handleLogicTypeChange = (value: string) => {
+    onUpdate(node.id, { logicType: value as LogicType });
   };
 
   const renderConfigFields = () => {
@@ -164,6 +169,41 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
                 className="min-h-[100px] mt-1"
               />
             </div>
+          </>
+        );
+
+      case 'ConditionalLogic':
+        return (
+          <>
+            <div>
+              <Label htmlFor="logicType">Logic Type</Label>
+              <Select 
+                value={node.data.logicType || "Success"} 
+                onValueChange={handleLogicTypeChange}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select logic type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Success">Success</SelectItem>
+                  <SelectItem value="Failed">Failed</SelectItem>
+                  <SelectItem value="Conditional">Conditional (if/else)</SelectItem>
+                  <SelectItem value="Indecisive">Indecisive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {node.data.logicType === "Conditional" && (
+              <div className="mt-4">
+                <Label htmlFor="condition">Condition</Label>
+                <Input 
+                  id="condition" 
+                  value={config.condition || ''} 
+                  onChange={(e) => handleChange('condition', e.target.value)}
+                  className="mt-1"
+                  placeholder="e.g., IDV country == 'US'"
+                />
+              </div>
+            )}
           </>
         );
         
