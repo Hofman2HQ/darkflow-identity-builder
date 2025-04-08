@@ -39,8 +39,8 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
     onUpdate(node.id, { config: newConfig });
   };
 
-  const handleLogicTypeChange = (value: string) => {
-    onUpdate(node.id, { logicType: value as LogicType });
+  const handleLogicTypeChange = (value: LogicType) => {
+    onUpdate(node.id, { logicType: value });
   };
 
   const renderConfigFields = () => {
@@ -76,7 +76,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
               <Label htmlFor="countries">Countries</Label>
               <Select 
                 value={config.country || ''} 
-                onValueChange={(value) => handleChange('country', value)}
+                onValueChange={(value: string) => handleChange('country', value)}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select a country" />
@@ -179,7 +179,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
               <Label htmlFor="logicType">Logic Type</Label>
               <Select 
                 value={node.data.logicType || "Success"} 
-                onValueChange={handleLogicTypeChange}
+                onValueChange={(value: LogicType) => handleLogicTypeChange(value)}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select logic type" />

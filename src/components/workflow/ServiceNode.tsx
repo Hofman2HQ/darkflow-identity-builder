@@ -4,7 +4,8 @@ import { Handle, Position } from '@xyflow/react';
 import { 
   AppWindow, Shield, Camera, User, Briefcase, 
   FileText, Cake, Scan, ScanFace, 
-  CheckSquare, XSquare, GitBranch
+  CheckSquare, XSquare, GitBranch,
+  CheckCircle, XCircle, HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +23,7 @@ export type ServiceType =
   | 'FaceCompare'
   | 'OBI'
   | 'TextNode'
-  | 'ConditionalLogic'; // Added new type for conditional logic
+  | 'ConditionalLogic'; 
 
 export type LogicType = 'Success' | 'Failed' | 'Conditional' | 'Indecisive';
 
@@ -39,7 +40,18 @@ interface ServiceNodeProps {
   selected: boolean;
 }
 
-const getServiceIcon = (type: ServiceType) => {
+const getServiceIcon = (type: ServiceType, logicType?: LogicType) => {
+  // For ConditionalLogic nodes, show different icons based on the logicType
+  if (type === 'ConditionalLogic' && logicType) {
+    switch (logicType) {
+      case 'Success': return <CheckCircle className="text-green-400" />;
+      case 'Failed': return <XCircle className="text-red-400" />;
+      case 'Conditional': return <GitBranch className="text-amber-400" />;
+      case 'Indecisive': return <HelpCircle className="text-blue-400" />;
+      default: return <GitBranch className="text-amber-400" />;
+    }
+  }
+
   switch (type) {
     case 'WebApp': return <AppWindow className="text-blue-400" />;
     case 'IDV': return <Shield className="text-green-400" />;
@@ -59,8 +71,20 @@ const getServiceIcon = (type: ServiceType) => {
   }
 }
 
+const getLogicTypeClass = (logicType?: LogicType) => {
+  if (!logicType) return '';
+  
+  switch (logicType) {
+    case 'Success': return 'border-green-500/40 bg-green-500/10';
+    case 'Failed': return 'border-red-500/40 bg-red-500/10';
+    case 'Conditional': return 'border-amber-500/40 bg-amber-500/10';
+    case 'Indecisive': return 'border-blue-500/40 bg-blue-500/10';
+    default: return 'border-amber-500/40';
+  }
+}
+
 const ServiceNode = memo(({ id, data, selected }: ServiceNodeProps) => {
-  const { type, label, isValid = true, isEntry = false } = data;
+  const { type, label, isValid = true, isEntry = false, logicType } = data;
   
   return (
     <div
@@ -69,7 +93,7 @@ const ServiceNode = memo(({ id, data, selected }: ServiceNodeProps) => {
         !isValid && 'invalid',
         isValid && !isEntry && 'valid',
         selected && 'ring-2 ring-primary/50',
-        type === 'ConditionalLogic' && 'border-amber-500/40'
+        type === 'ConditionalLogic' && getLogicTypeClass(logicType)
       )}
     >
       {!isEntry && (
@@ -82,14 +106,14 @@ const ServiceNode = memo(({ id, data, selected }: ServiceNodeProps) => {
       )}
       
       <div className="service-node__icon">
-        {getServiceIcon(type)}
+        {getServiceIcon(type, logicType)}
       </div>
       
       <div className="service-node__title">
         {label}
-        {type === 'ConditionalLogic' && data.logicType && (
+        {type === 'ConditionalLogic' && logicType && (
           <div className="text-xs opacity-70 mt-1">
-            {data.logicType}
+            {logicType}
           </div>
         )}
       </div>
