@@ -140,7 +140,8 @@ const WorkflowBuilder: React.FC = () => {
         conditionType: defaultConditionType, 
         label: defaultLabel 
       },
-      label: defaultLabel
+      label: defaultLabel,
+      style: { stroke: '#9b87f5', strokeWidth: 2 }
     };
     setEdges((eds) => addEdge(newEdge as Edge, eds));
   }, [nodes, setEdges]);
@@ -333,7 +334,7 @@ const WorkflowBuilder: React.FC = () => {
   }, [nodes, edges, validateWorkflow]);
   
   return (
-    <div className="h-screen" ref={reactFlowWrapper}>
+    <div className="h-screen bg-gradient-to-br from-indigo-50 to-slate-100" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -347,16 +348,34 @@ const WorkflowBuilder: React.FC = () => {
         fitView
         snapToGrid
         onInit={setReactFlowInstance}
+        className="workflow-canvas"
+        defaultEdgeOptions={{ 
+          style: { strokeWidth: 2, stroke: '#9b87f5' },
+          animated: true
+        }}
       >
-        <Controls />
-        <MiniMap nodeBorderRadius={2} />
-        <Background gap={12} size={1} />
+        <Controls className="bg-white/70 backdrop-blur-sm shadow-md rounded-lg border border-slate-200/50" />
+        <MiniMap 
+          nodeBorderRadius={8} 
+          className="bg-white/70 backdrop-blur-sm shadow-md rounded-lg border border-slate-200/50" 
+          nodeColor={(node) => {
+            switch (node.data?.type) {
+              case 'WebApp': return '#60a5fa'; // blue
+              case 'IDV': return '#4ade80'; // green
+              case 'Media': return '#c084fc'; // purple
+              case 'PII': return '#f472b6'; // pink
+              case 'ConditionalLogic': return '#fbbf24'; // amber
+              default: return '#94a3b8'; // slate
+            }
+          }}
+        />
+        <Background gap={20} size={1} color="#e2e8f0" className="bg-white/30" />
         
-        <Panel position="bottom-center">
+        <Panel position="bottom-center" className="p-2">
           <Button 
             variant="default" 
             onClick={validateWorkflow}
-            className="bg-primary hover:bg-primary/90"
+            className="bg-gradient-to-r from-primary/90 to-primary hover:from-primary hover:to-primary/90 shadow-md px-6"
           >
             Validate Workflow
           </Button>

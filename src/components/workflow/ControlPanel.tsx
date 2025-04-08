@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { 
   AppWindow, Shield, Camera, User, Briefcase, 
   FileText, Cake, Scan, ScanFace, 
   CheckSquare, FileUp, Download, Save, Trash2, GitBranch,
-  ChevronDown, PlusCircle, Package
+  PlusCircle, Package, Sparkles, Workflow, Zap
 } from 'lucide-react';
 import type { ServiceType } from './ServiceNode';
 import {
@@ -33,170 +33,163 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onImport,
   onExport
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-
   // Group services by category
   const serviceCategories = {
     entry: [
-      { type: 'WebApp', icon: <AppWindow />, label: 'WebApp' }
+      { type: 'WebApp', icon: <AppWindow className="text-blue-400" />, label: 'Web Application' }
     ],
     verification: [
-      { type: 'IDV', icon: <Shield />, label: 'IDV' },
-      { type: 'Media', icon: <Camera />, label: 'Media' },
-      { type: 'PII', icon: <User />, label: 'PII' },
-      { type: 'AML', icon: <Shield />, label: 'AML' },
-      { type: 'KYB', icon: <Briefcase />, label: 'KYB' }
+      { type: 'IDV', icon: <Shield className="text-green-400" />, label: 'ID Verification' },
+      { type: 'Media', icon: <Camera className="text-purple-400" />, label: 'Media Upload' },
+      { type: 'PII', icon: <User className="text-pink-400" />, label: 'Personal Info' },
+      { type: 'AML', icon: <Shield className="text-red-400" />, label: 'AML Check' },
+      { type: 'KYB', icon: <Briefcase className="text-orange-400" />, label: 'Business Verification' }
     ],
     document: [
-      { type: 'POA', icon: <FileText />, label: 'POA' },
-      { type: 'AnyDoc', icon: <FileText />, label: 'AnyDoc' }
+      { type: 'POA', icon: <FileText className="text-yellow-400" />, label: 'Proof of Address' },
+      { type: 'AnyDoc', icon: <FileText className="text-blue-400" />, label: 'Document Upload' }
     ],
     biometric: [
-      { type: 'AgeEstimation', icon: <Cake />, label: 'Age' },
-      { type: 'Liveness', icon: <Scan />, label: 'Liveness' },
-      { type: 'FaceCompare', icon: <ScanFace />, label: 'Face Compare' },
-      { type: 'OBI', icon: <CheckSquare />, label: 'OBI' }
+      { type: 'AgeEstimation', icon: <Cake className="text-teal-400" />, label: 'Age Estimation' },
+      { type: 'Liveness', icon: <Scan className="text-indigo-400" />, label: 'Liveness Check' },
+      { type: 'FaceCompare', icon: <ScanFace className="text-cyan-400" />, label: 'Face Comparison' },
+      { type: 'OBI', icon: <CheckSquare className="text-emerald-400" />, label: 'Online Banking' }
     ],
     utility: [
-      { type: 'ConditionalLogic', icon: <GitBranch />, label: 'Conditional Logic' },
-      { type: 'TextNode', icon: <FileText />, label: 'Text Note' }
+      { type: 'ConditionalLogic', icon: <GitBranch className="text-amber-400" />, label: 'Conditional Logic' },
+      { type: 'TextNode', icon: <FileText className="text-gray-400" />, label: 'Text Note' }
     ]
-  };
-  
-  // Get services based on selected category
-  const getDisplayedServices = () => {
-    if (selectedCategory === 'all') {
-      return Object.values(serviceCategories).flat();
-    }
-    return serviceCategories[selectedCategory as keyof typeof serviceCategories] || [];
   };
 
   return (
-    <div className="glass-morphism fixed right-4 top-4 flex flex-col gap-4 rounded-lg p-4 w-[280px] z-10 bg-background/95 shadow-lg backdrop-blur-sm">
+    <div className="glass-morphism fixed right-4 top-4 flex flex-col gap-3 rounded-xl p-4 w-[280px] z-10 bg-background/95 shadow-lg backdrop-blur-sm border border-slate-200/50">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Workflow Builder</h3>
+        <div className="flex items-center gap-2">
+          <Workflow className="h-5 w-5 text-primary" />
+          <h3 className="text-sm font-semibold">Workflow Builder</h3>
+        </div>
+        
         <div className="flex gap-1">
-          <Button size="icon" variant="ghost" onClick={onSave} title="Save" className="h-7 w-7">
+          <Button size="icon" variant="ghost" onClick={onSave} title="Save" className="h-7 w-7 hover:bg-primary/10 hover:text-primary">
             <Save className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={onImport} title="Import" className="h-7 w-7">
+          <Button size="icon" variant="ghost" onClick={onImport} title="Import" className="h-7 w-7 hover:bg-primary/10 hover:text-primary">
             <FileUp className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={onExport} title="Export" className="h-7 w-7">
+          <Button size="icon" variant="ghost" onClick={onExport} title="Export" className="h-7 w-7 hover:bg-primary/10 hover:text-primary">
             <Download className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={onClear} title="Clear" className="h-7 w-7">
+          <Button size="icon" variant="ghost" onClick={onClear} title="Clear" className="h-7 w-7 hover:bg-red-500/10 hover:text-red-500">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
       
-      <Separator />
+      <Separator className="my-1" />
       
-      <div className="flex justify-between mb-2">
-        <h4 className="text-sm font-medium">Add Services</h4>
+      <div className="space-y-3">
+        {/* Add Service Dropdown Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
-              {selectedCategory === 'all' ? 'All Services' : selectedCategory}
-              <ChevronDown className="h-3.5 w-3.5" />
+            <Button className="w-full justify-start gap-2 bg-gradient-to-r from-primary/90 to-primary hover:from-primary hover:to-primary/90">
+              <PlusCircle className="h-4 w-4" />
+              <span>Add Service</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[180px]">
-            <DropdownMenuItem onClick={() => setSelectedCategory('all')}>
-              All Services
-            </DropdownMenuItem>
+          <DropdownMenuContent className="w-[220px]">
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <AppWindow className="h-4 w-4 text-blue-500" />
+              Entry Points
+            </DropdownMenuLabel>
+            {serviceCategories.entry.map(service => (
+              <DropdownMenuItem 
+                key={service.type}
+                onClick={() => onAddNode(service.type as ServiceType)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                {service.icon}
+                {service.label}
+              </DropdownMenuItem>
+            ))}
+            
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setSelectedCategory('entry')}>Entry Points</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSelectedCategory('verification')}>Verification</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSelectedCategory('document')}>Documents</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSelectedCategory('biometric')}>Biometrics</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSelectedCategory('utility')}>Utilities</DropdownMenuItem>
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-green-500" />
+              Verification
+            </DropdownMenuLabel>
+            {serviceCategories.verification.map(service => (
+              <DropdownMenuItem 
+                key={service.type}
+                onClick={() => onAddNode(service.type as ServiceType)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                {service.icon}
+                {service.label}
+              </DropdownMenuItem>
+            ))}
+            
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-blue-500" />
+              Documents
+            </DropdownMenuLabel>
+            {serviceCategories.document.map(service => (
+              <DropdownMenuItem 
+                key={service.type}
+                onClick={() => onAddNode(service.type as ServiceType)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                {service.icon}
+                {service.label}
+              </DropdownMenuItem>
+            ))}
+            
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <ScanFace className="h-4 w-4 text-cyan-500" />
+              Biometrics
+            </DropdownMenuLabel>
+            {serviceCategories.biometric.map(service => (
+              <DropdownMenuItem 
+                key={service.type}
+                onClick={() => onAddNode(service.type as ServiceType)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                {service.icon}
+                {service.label}
+              </DropdownMenuItem>
+            ))}
+            
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-amber-500" />
+              Logic & Utilities
+            </DropdownMenuLabel>
+            {serviceCategories.utility.map(service => (
+              <DropdownMenuItem 
+                key={service.type}
+                onClick={() => onAddNode(service.type as ServiceType)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                {service.icon}
+                {service.label}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Button variant="outline" className="w-full justify-start gap-2 border-dashed text-muted-foreground hover:text-primary hover:border-primary">
+          <Sparkles className="h-4 w-4" />
+          <span>Add Condition</span>
+        </Button>
+
+        <Button variant="outline" className="w-full justify-start gap-2 border-dashed text-muted-foreground hover:text-primary hover:border-primary">
+          <Package className="h-4 w-4" />
+          <span>Add Extra Options</span>
+        </Button>
       </div>
-      
-      <div className="grid grid-cols-2 gap-2">
-        {getDisplayedServices().map((service) => (
-          <ServiceButton 
-            key={service.type}
-            icon={service.icon} 
-            label={service.label} 
-            onClick={() => onAddNode(service.type as ServiceType)} 
-          />
-        ))}
-      </div>
-      
-      <Separator />
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button className="w-full justify-start gap-2">
-            <PlusCircle className="h-4 w-4" />
-            <span>Add Service</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-[220px]">
-          <DropdownMenuLabel>Entry Points</DropdownMenuLabel>
-          {serviceCategories.entry.map(service => (
-            <DropdownMenuItem 
-              key={service.type}
-              onClick={() => onAddNode(service.type as ServiceType)}
-              className="flex items-center gap-2"
-            >
-              {service.icon}
-              {service.label}
-            </DropdownMenuItem>
-          ))}
-          
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Verification</DropdownMenuLabel>
-          {serviceCategories.verification.map(service => (
-            <DropdownMenuItem 
-              key={service.type}
-              onClick={() => onAddNode(service.type as ServiceType)}
-              className="flex items-center gap-2"
-            >
-              {service.icon}
-              {service.label}
-            </DropdownMenuItem>
-          ))}
-          
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Logic & Utilities</DropdownMenuLabel>
-          {serviceCategories.utility.map(service => (
-            <DropdownMenuItem 
-              key={service.type}
-              onClick={() => onAddNode(service.type as ServiceType)}
-              className="flex items-center gap-2"
-            >
-              {service.icon}
-              {service.label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 };
-
-interface ServiceButtonProps {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  fullWidth?: boolean;
-}
-
-const ServiceButton: React.FC<ServiceButtonProps> = ({ icon, label, onClick, fullWidth }) => (
-  <Button
-    variant="secondary"
-    size="sm"
-    className={`flex items-center justify-start gap-2 h-9 ${fullWidth ? 'col-span-2' : ''}`}
-    onClick={onClick}
-  >
-    {icon}
-    <span className="text-xs">{label}</span>
-  </Button>
-);
 
 export default ControlPanel;
