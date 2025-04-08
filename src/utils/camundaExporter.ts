@@ -50,8 +50,25 @@ export const transformToCamunda = (nodes: Node[], edges: Edge[]): CamundaWorkflo
     // Skip the end nodes since they're already added
     if (node.data.type === 'EndNode') return;
     
+    // Add start node explicitly as a step - this fixes the validation error
+    if (node.data.type === 'StartNode') {
+      // Find outgoing edges from the start node
+      const outgoingEdges = edges.filter(edge => edge.source === node.id);
+      
+      const goToStep = outgoingEdges.length > 0 ? outgoingEdges[0].target : undefined;
+      
+      workflow.steps.push({
+        type: 'service',
+        id: node.id,
+        service: 'start',
+        goToStep
+      });
+      
+      return;
+    }
+    
     // Skip description boxes and other non-service nodes
-    if (['StartNode', 'DescriptionBox', 'TextNode'].includes(node.data.type as string)) return;
+    if (['DescriptionBox', 'TextNode'].includes(node.data.type as string)) return;
 
     // Find outgoing edges for the node
     const outgoingEdges = edges.filter(edge => edge.source === node.id);
@@ -242,4 +259,3 @@ export const validateCamundaWorkflow = (workflow: CamundaWorkflow): string[] => 
   
   return errors;
 };
-
