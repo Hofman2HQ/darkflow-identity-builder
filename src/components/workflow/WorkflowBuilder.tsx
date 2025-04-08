@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,
@@ -96,6 +97,38 @@ const WorkflowBuilder: React.FC = () => {
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const { theme, toggleTheme } = useTheme();
   
+  // Keyboard event handler for deleting selected nodes
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNode) {
+        // Don't allow deleting the Start node
+        if (selectedNode.data.type === 'StartNode') {
+          toast({
+            title: "Cannot Delete Start Node",
+            description: "The Start node is required and cannot be deleted.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Delete the node and its connected edges
+        setNodes(nodes.filter(n => n.id !== selectedNode.id));
+        setEdges(edges.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
+        setSelectedNode(null);
+        
+        toast({
+          title: "Node Deleted",
+          description: `The ${selectedNode.data.label || selectedNode.data.type} node has been removed.`,
+        });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedNode, nodes, edges, setNodes, setEdges]);
+  
   const validateWorkflow = useCallback(() => {
     // Check for start node
     const startNodes = nodes.filter(n => n.data.type === 'StartNode');
@@ -189,6 +222,12 @@ const WorkflowBuilder: React.FC = () => {
   }, [nodes, edges, setNodes]);
   
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node<FlowNodeData>) => {
+    setSelectedNode(node);
+    setSelectedEdge(null);
+  }, []);
+  
+  // New double-click handler for nodes to open the config panel
+  const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node<FlowNodeData>) => {
     setSelectedNode(node);
     setSelectedEdge(null);
   }, []);
@@ -520,6 +559,7 @@ const WorkflowBuilder: React.FC = () => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onNodeDoubleClick={onNodeDoubleClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
@@ -592,7 +632,7 @@ const WorkflowBuilder: React.FC = () => {
         theme={theme}
       />
       
-      {selectedNode && (
+      {selectedNode && selectedNode.id === document.activeElement?.id && (
         <NodeConfigPanel
           node={selectedNode}
           onClose={() => setSelectedNode(null)}

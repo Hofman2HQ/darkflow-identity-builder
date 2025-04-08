@@ -18,8 +18,31 @@ import {
 } from '@/components/ui/select';
 import { Theme } from './ThemeProvider';
 
+interface NodeConfig {
+  appId?: string;
+  flowName?: string;
+  idTypes?: string;
+  requireSelfie?: boolean;
+  debugMode?: boolean;
+  testFlags?: string;
+  extraNotes?: string;
+  timeout?: number;
+  [key: string]: any;
+}
+
+interface FlowNodeData {
+  type: string;
+  label: string;
+  config?: NodeConfig;
+  isValid?: boolean;
+  isEntry?: boolean;
+  logicType?: LogicType;
+  description?: string;
+  [key: string]: any;
+}
+
 interface NodeConfigPanelProps {
-  node: Node;
+  node: Node<FlowNodeData>;
   onClose: () => void;
   onUpdate: (id: string, data: any) => void;
   theme: Theme;
@@ -27,7 +50,7 @@ interface NodeConfigPanelProps {
 
 const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpdate, theme = 'light' }) => {
   const { id, data } = node;
-  const [config, setConfig] = useState(data.config || {});
+  const [config, setConfig] = useState<NodeConfig>(data.config || {});
   const [label, setLabel] = useState(data.label || '');
   const [logicType, setLogicType] = useState<LogicType | undefined>(data.logicType);
   const [description, setDescription] = useState(data.description || '');
@@ -102,7 +125,10 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
         {data.type === 'ConditionalLogic' && (
           <div>
             <Label htmlFor="logic-type">Logic Type</Label>
-            <Select value={logicType} onValueChange={(value) => setLogicType(value as LogicType)}>
+            <Select 
+              value={logicType} 
+              onValueChange={(value: LogicType) => setLogicType(value)}
+            >
               <SelectTrigger id="logic-type" className={`mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : ''}`}>
                 <SelectValue placeholder="Select logic type" />
               </SelectTrigger>
