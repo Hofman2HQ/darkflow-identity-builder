@@ -47,6 +47,7 @@ interface FlowNodeData {
   isValid?: boolean;
   isEntry?: boolean;
   logicType?: LogicType;
+  [key: string]: any; // Add index signature for string keys
 }
 
 const nodeTypes: NodeTypes = {
@@ -341,12 +342,12 @@ const WorkflowBuilder: React.FC = () => {
   return (
     <div className={`h-screen ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 to-slate-800' : 'bg-gradient-to-br from-indigo-50 to-slate-100'}`} ref={reactFlowWrapper}>
       <ReactFlow
-        nodes={nodes}
+        nodes={nodes as Node[]}
         edges={edges}
-        onNodesChange={onNodesChange}
+        onNodesChange={onNodesChange as any}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeClick={onNodeClick}
+        onNodeClick={onNodeClick as any}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
@@ -370,6 +371,7 @@ const WorkflowBuilder: React.FC = () => {
               case 'Media': return theme === 'dark' ? '#c084fc' : '#c084fc'; // purple
               case 'PII': return theme === 'dark' ? '#f472b6' : '#f472b6'; // pink
               case 'ConditionalLogic': return theme === 'dark' ? '#fbbf24' : '#fbbf24'; // amber
+              case 'TextNode': return theme === 'dark' ? '#94a3b8' : '#94a3b8'; // slate for text nodes
               default: return theme === 'dark' ? '#94a3b8' : '#94a3b8'; // slate
             }
           }}

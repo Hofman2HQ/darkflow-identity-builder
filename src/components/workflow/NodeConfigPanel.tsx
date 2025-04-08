@@ -38,6 +38,7 @@ interface FlowNodeData {
   isValid?: boolean;
   isEntry?: boolean;
   logicType?: LogicType;
+  [key: string]: any; // Add index signature for string keys
 }
 
 interface NodeConfigPanelProps {
@@ -55,10 +56,22 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 }) => {
   const [extraType, setExtraType] = useState<string>('none');
   const [freeText, setFreeText] = useState<string>('');
+  const [textContent, setTextContent] = useState<string>('');
 
   if (!node) {
     return null;
   }
+
+  useEffect(() => {
+    if (node?.data?.config?.extraNotes) {
+      setFreeText(node.data.config.extraNotes as string);
+      setExtraType('freeText');
+    }
+
+    if (node?.data?.type === 'TextNode') {
+      setTextContent(node.data.textContent || 'Enter your text here');
+    }
+  }, [node]);
 
   const handleChange = (key: string, value: any) => {
     onUpdate(node.id, { [key]: value });
@@ -79,17 +92,14 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
     }
   };
 
-  // Initialize freeText from node data if it exists
-  useEffect(() => {
-    if (node?.data?.config?.extraNotes) {
-      setFreeText(node.data.config.extraNotes as string);
-      setExtraType('freeText');
-    }
-  }, [node]);
-
   const handleFreeTextChange = (text: string) => {
     setFreeText(text);
     handleConfigChange('extraNotes', text);
+  };
+
+  const handleTextContentChange = (text: string) => {
+    setTextContent(text);
+    handleChange('textContent', text);
   };
   
   const isDark = theme === 'dark';
@@ -118,6 +128,19 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
             placeholder="e.g., ID Verification, Face Match"
           />
         </div>
+        
+        {node.data.type === 'TextNode' && (
+          <div>
+            <Label htmlFor="textContent" className={isDark ? 'text-gray-200' : ''}>Text Content</Label>
+            <Textarea 
+              id="textContent" 
+              value={textContent} 
+              onChange={(e) => handleTextContentChange(e.target.value)}
+              className={`min-h-[100px] mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
+              placeholder="Enter your text here..."
+            />
+          </div>
+        )}
         
         {node.data.type === 'ConditionalLogic' && (
           <div>

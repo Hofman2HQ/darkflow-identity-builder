@@ -6,7 +6,7 @@ import {
   AppWindow, Shield, Camera, User, Briefcase, 
   FileText, Cake, Scan, ScanFace, 
   CheckSquare, FileUp, Download, Save, Trash2, GitBranch,
-  PlusCircle, Package, Sparkles, Workflow, Zap
+  PlusCircle, Package, Sparkles, Workflow, Zap, Type
 } from 'lucide-react';
 import type { ServiceType } from './ServiceNode';
 import {
@@ -66,11 +66,20 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     ],
     utility: [
       { type: 'ConditionalLogic', icon: <GitBranch className="text-amber-400" />, label: 'Conditional Logic' },
-      { type: 'TextNode', icon: <FileText className="text-gray-400" />, label: 'Text Note' }
+      { type: 'TextNode', icon: <Type className="text-slate-400" />, label: 'Text Note' }
     ]
   };
 
   const isDark = theme === 'dark';
+
+  const handleAddFreeText = () => {
+    if (freeText.trim()) {
+      // Add a TextNode with the free text content
+      onAddNode('TextNode');
+      setFreeText('');
+      setShowOptionsDropdown(false);
+    }
+  };
 
   return (
     <div className={`glass-morphism fixed right-4 top-4 flex flex-col gap-3 rounded-xl p-4 w-[280px] z-10 ${isDark ? 'bg-gray-800/95 border-gray-700/50 text-white' : 'bg-background/95 border-slate-200/50'} shadow-lg backdrop-blur-sm`}>
@@ -206,10 +215,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             <div className="space-y-3">
               <DropdownMenuLabel>Extra Options</DropdownMenuLabel>
               <div>
-                <Label htmlFor="freeTextOption" className={isDark ? 'text-gray-200' : ''}>Free Text</Label>
+                <Label htmlFor="freeTextOption" className={isDark ? 'text-gray-200' : ''}>Free Text Box</Label>
                 <Textarea 
                   id="freeTextOption" 
-                  placeholder="Enter your notes, custom instructions, or other text here..."
+                  placeholder="Enter your text here... (Drag to canvas)"
                   className={`min-h-[80px] mt-1 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
                   value={freeText}
                   onChange={(e) => setFreeText(e.target.value)}
@@ -219,10 +228,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 <Button 
                   variant="default" 
                   size="sm"
-                  onClick={() => setShowOptionsDropdown(false)}
+                  onClick={() => onAddNode('TextNode')}
                   className="mt-2"
                 >
-                  Save
+                  Add to Canvas
                 </Button>
               </div>
             </div>
