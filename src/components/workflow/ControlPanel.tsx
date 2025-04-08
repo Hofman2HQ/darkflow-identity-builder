@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -25,7 +24,7 @@ interface ControlPanelProps {
   onSave: () => void;
   onImport: () => void;
   onExport: () => void;
-  theme?: Theme;
+  theme: Theme;
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({

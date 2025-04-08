@@ -30,8 +30,8 @@ interface NodeConfig {
   [key: string]: any; // Allow for other properties
 }
 
-// Updated to implement Record<string, unknown>
-interface NodeData extends Record<string, any> {
+// NodeData is the type for the data property of a Node
+interface NodeData {
   type: string;
   label: string;
   config?: NodeConfig;
@@ -82,7 +82,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
   // Initialize freeText from node data if it exists
   useEffect(() => {
     if (node?.data?.config?.extraNotes) {
-      setFreeText(node.data.config.extraNotes);
+      setFreeText(node.data.config.extraNotes as string);
       setExtraType('freeText');
     }
   }, [node]);

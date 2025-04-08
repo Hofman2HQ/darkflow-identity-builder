@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,
@@ -24,6 +25,7 @@ import { toast } from '@/hooks/use-toast';
 import { useTheme } from './ThemeProvider';
 import { Theme } from './ThemeProvider';
 
+// Define the structure of the node config
 interface NodeConfig {
   appId?: string;
   flowName?: string;
@@ -36,7 +38,8 @@ interface NodeConfig {
   [key: string]: any;
 }
 
-interface NodeData extends Record<string, any> {
+// NodeData is the type for the data property of a Node
+interface NodeData {
   type: string;
   label: string;
   config?: NodeConfig;
