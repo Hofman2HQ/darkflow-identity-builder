@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,14 +23,14 @@ interface NodeConfigPanelProps {
 }
 
 const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpdate }) => {
-  const [config, setConfig] = useState<any>(node?.data?.config || {});
+  const [config, setConfig] = useState<Record<string, any>>(node?.data?.config || {});
 
   if (!node) {
     return null;
   }
 
-  const type: ServiceType = node.data.type;
-  const label = node.data.label;
+  const type = node.data.type as ServiceType;
+  const label = node.data.label as string;
 
   const handleChange = (key: string, value: any) => {
     const newConfig = { ...config, [key]: value };
@@ -168,8 +167,6 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onUpda
           </>
         );
         
-      // Add configurations for other service types
-      
       default:
         return (
           <div className="text-sm text-muted-foreground">

@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { 
   AppWindow, Shield, Camera, User, Briefcase, 
-  FileText, Cake, Scan, FaceId, 
+  FileText, Cake, Scan, ScanFace, 
   CheckSquare, XSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -47,7 +47,7 @@ const getServiceIcon = (type: ServiceType) => {
     case 'AnyDoc': return <FileText className="text-blue-400" />;
     case 'AgeEstimation': return <Cake className="text-teal-400" />;
     case 'Liveness': return <Scan className="text-indigo-400" />;
-    case 'FaceCompare': return <FaceId className="text-cyan-400" />;
+    case 'FaceCompare': return <ScanFace className="text-cyan-400" />; // Changed from FaceId to ScanFace
     case 'OBI': return <CheckSquare className="text-emerald-400" />;
     case 'TextNode': return <FileText className="text-gray-400" />;
     default: return <XSquare className="text-gray-400" />;

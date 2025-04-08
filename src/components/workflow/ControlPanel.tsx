@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { 
   AppWindow, Shield, Camera, User, Briefcase, 
-  FileText, Cake, Scan, FaceId, 
+  FileText, Cake, Scan, ScanFace, 
   CheckSquare, FileUp, Download, Save, Trash2
 } from 'lucide-react';
 import type { ServiceType } from './ServiceNode';
@@ -57,7 +56,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         <ServiceButton icon={<FileText />} label="AnyDoc" onClick={() => onAddNode('AnyDoc')} />
         <ServiceButton icon={<Cake />} label="Age" onClick={() => onAddNode('AgeEstimation')} />
         <ServiceButton icon={<Scan />} label="Liveness" onClick={() => onAddNode('Liveness')} />
-        <ServiceButton icon={<FaceId />} label="Face" onClick={() => onAddNode('FaceCompare')} />
+        <ServiceButton icon={<ScanFace />} label="Face" onClick={() => onAddNode('FaceCompare')} />
         <ServiceButton icon={<CheckSquare />} label="OBI" onClick={() => onAddNode('OBI')} />
       </div>
       

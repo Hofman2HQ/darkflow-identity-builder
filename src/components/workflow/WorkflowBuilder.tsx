@@ -13,6 +13,7 @@ import {
   Panel
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { Button } from '@/components/ui/button';
 
 import ServiceNode, { ServiceType } from './ServiceNode';
 import ControlPanel from './ControlPanel';
@@ -48,13 +49,10 @@ const WorkflowBuilder: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   
-  // Validation
   const validateWorkflow = useCallback(() => {
-    // Check if there's exactly one WebApp node
     const webAppNodes = nodes.filter(n => n.data.type === 'WebApp');
     const hasOneWebApp = webAppNodes.length === 1;
     
-    // Validate nodes and mark them as valid/invalid
     const updatedNodes = nodes.map(node => {
       let isValid = true;
       
@@ -62,7 +60,6 @@ const WorkflowBuilder: React.FC = () => {
         isValid = false;
       }
       
-      // Check if non-WebApp nodes have incoming connections
       if (node.data.type !== 'WebApp' && node.data.type !== 'TextNode') {
         const hasIncoming = edges.some(e => e.target === node.id);
         if (!hasIncoming) {
@@ -79,10 +76,8 @@ const WorkflowBuilder: React.FC = () => {
       };
     });
     
-    // Update nodes with validation status
     setNodes(updatedNodes);
     
-    // Count errors for toast notification
     const invalidNodesCount = updatedNodes.filter(n => !n.data.isValid).length;
     if (invalidNodesCount > 0) {
       toast({
@@ -96,27 +91,22 @@ const WorkflowBuilder: React.FC = () => {
     return true;
   }, [nodes, edges, setNodes, toast]);
   
-  // Handle node selection
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
     setSelectedEdge(null);
   }, []);
   
-  // Handle edge selection
   const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
     setSelectedEdge(edge);
     setSelectedNode(null);
   }, []);
   
-  // Handle background click to deselect
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
     setSelectedEdge(null);
   }, []);
   
-  // Connection handler
   const onConnect = useCallback((params: Connection) => {
-    // Create a unique ID for the edge
     const edgeId = `e${params.source}-${params.target}`;
     const newEdge = {
       ...params,
@@ -124,10 +114,9 @@ const WorkflowBuilder: React.FC = () => {
       animated: true,
       data: { conditionType: 'match', label: 'On Match' }
     };
-    setEdges((eds) => addEdge(newEdge, eds));
+    setEdges((eds) => addEdge(newEdge as Edge, eds));
   }, [setEdges]);
   
-  // Node updater
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -145,7 +134,6 @@ const WorkflowBuilder: React.FC = () => {
     );
   }, [setNodes]);
   
-  // Edge updater
   const updateEdgeData = useCallback((edgeId: string, newData: any) => {
     setEdges((eds) =>
       eds.map((edge) => {
@@ -164,9 +152,7 @@ const WorkflowBuilder: React.FC = () => {
     );
   }, [setEdges]);
   
-  // Add a new node
   const addNode = useCallback((type: ServiceType) => {
-    // Check if adding a WebApp and one already exists
     if (type === 'WebApp' && nodes.some(n => n.data.type === 'WebApp')) {
       toast({
         title: "Cannot add WebApp",
@@ -193,9 +179,7 @@ const WorkflowBuilder: React.FC = () => {
     setNodes((nds) => [...nds, newNode]);
   }, [nodes, reactFlowInstance, setNodes, toast]);
   
-  // Clear the workflow
   const clearWorkflow = useCallback(() => {
-    // Keep only the WebApp node
     const webAppNode = nodes.find(n => n.data.type === 'WebApp');
     if (webAppNode) {
       setNodes([webAppNode]);
@@ -212,7 +196,6 @@ const WorkflowBuilder: React.FC = () => {
     });
   }, [nodes, setNodes, setEdges, toast]);
   
-  // Save workflow
   const saveWorkflow = useCallback(() => {
     const isValid = validateWorkflow();
     
@@ -230,8 +213,6 @@ const WorkflowBuilder: React.FC = () => {
       edges,
     };
     
-    // In a real app, we would send this to a server
-    // For now, we'll just simulate saving
     console.log('Saving workflow:', workflow);
     localStorage.setItem('workflow', JSON.stringify(workflow));
     
@@ -241,7 +222,6 @@ const WorkflowBuilder: React.FC = () => {
     });
   }, [nodes, edges, validateWorkflow, toast]);
   
-  // Import workflow
   const importWorkflow = useCallback(() => {
     try {
       const savedWorkflow = localStorage.getItem('workflow');
@@ -269,7 +249,6 @@ const WorkflowBuilder: React.FC = () => {
     }
   }, [setNodes, setEdges, toast]);
   
-  // Export workflow
   const exportWorkflow = useCallback(() => {
     const isValid = validateWorkflow();
     
@@ -290,7 +269,6 @@ const WorkflowBuilder: React.FC = () => {
     const jsonString = JSON.stringify(workflow, null, 2);
     const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(jsonString)}`;
     
-    // Create a download link and trigger it
     const downloadLink = document.createElement('a');
     downloadLink.setAttribute('href', dataUri);
     downloadLink.setAttribute('download', 'workflow.json');
@@ -304,9 +282,7 @@ const WorkflowBuilder: React.FC = () => {
     });
   }, [nodes, edges, validateWorkflow, toast]);
   
-  // Load an example workflow on first render
   useEffect(() => {
-    // You can add more example nodes and edges here if needed
   }, []);
   
   return (
